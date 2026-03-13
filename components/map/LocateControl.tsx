@@ -2,16 +2,14 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useMap } from "react-leaflet";
+import { RouteRendererProps } from "@/lib/marker/markerMaker";
 
-
-const Circle = dynamic(
-  () => import("react-leaflet").then((m) => m.Circle),
-  { ssr: false }
-);
+const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
 
 
 
-export default function LocateControl() {
+export default function LocateControl({ icons }: RouteRendererProps) {
   const map = useMap();
   const [location, setLocation] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -51,11 +49,13 @@ export default function LocateControl() {
         />
       )}
 
+      {/* User Marker */}
+      {location &&  <Marker position={location} icon={icons.defaultIcon} />}
 
       {/* Locate Me Button */}
       <button
         onClick={handleLocate}
-        className={`fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
+        className={`fixed bottom-6 cursor-pointer right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
           isLocating ? "animate-pulse" : ""
         }`}
         title="Find My Location"

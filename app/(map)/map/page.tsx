@@ -16,7 +16,6 @@ export default function MapPage() {
     setCustomPois((prev) => [...prev, poi]);
   };
 
-  // Filter nearby default POIs based on user location (5km radius)
   const nearbyPois = userLocation
     ? defaultPois.filter((poi) => {
         const distance = getDistance(
