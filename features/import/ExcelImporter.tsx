@@ -10,7 +10,7 @@ export default function ExcelImporter() {
   const fileRef = useRef<HTMLInputElement>(null);
   const { addPoints, setPoints } = useMapStore();
   const [uploadedPoints, setUploadedPoints] = useState<
-    { lat: number; lng: number }[]
+    { lat: number; lng: number,name?:string }[]
   >([]);
 
   function openPicker() {
@@ -28,10 +28,11 @@ export default function ExcelImporter() {
       .map((row: any) => {
         const lat = Number(row.lat ?? row.Lat ?? row.latitude);
         const lng = Number(row.lng ?? row.Lng ?? row.longitude);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+        const name = (row.his);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng , name};
         return null;
       })
-      .filter(Boolean) as { lat: number; lng: number }[];
+      .filter(Boolean) as { lat: number; lng: number,name:string}[];
 
     if (parsed.length > 0) {
       setUploadedPoints(parsed);

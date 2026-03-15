@@ -9,8 +9,16 @@ import { useMapStore } from "@/stores/useMapStore";
 export default function Drawer() {
   const [open, setOpen] = useState(false);
   const openPanel = useMapStore((s) => s.openPanel);
-
+ 
   const controls = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: (
+        <Image src="/images/dashboard.png" width={34} height={25} alt="memory" />
+      ),
+      action: () => openPanel('dashboard'),
+    },
     {
       id: "save",
       label: "Save",
@@ -78,7 +86,7 @@ export default function Drawer() {
           <Button
             key={c.id}
             variant="glass"
-            onClick={c.action || (() => {})} // ⚡ fallback function
+            onClick={c.action || (() => {})} 
             className="
               flex flex-col items-center justify-center
               gap-1

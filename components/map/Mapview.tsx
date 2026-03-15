@@ -72,7 +72,9 @@ export default function MapView({ pois, userLocation }: MapViewProps) {
   <Marker key={i} icon={icons.defaultIcon} position={[p.lat, p.lng]}>
 
      <Popup>
-              <h3 className="font-bold">{`${p.lat},${p.lng}`}</h3>
+            
+                <h3 className="font-bold">{`${p.name}`}</h3>
+             
              
             </Popup>
   </Marker>

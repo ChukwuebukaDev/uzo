@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { POI } from "@/components/map/Mapview"
+import { POI } from "@/components/map/Mapview";
 import { pois as defaultPois } from "@/app/lib/Pois";
 import { getDistance } from "@/lib/distance";
 import { Toaster } from "sonner";
@@ -15,7 +15,7 @@ const MapView = dynamic(() => import("@/components/map/Mapview"), {
 export default function MapPage() {
   const [customPois, setCustomPois] = useState<POI[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null
+    null,
   );
   // const handleAddPOI = (poi: POI) => {
   //   setCustomPois((prev) => [...prev, poi]);
@@ -27,7 +27,7 @@ export default function MapPage() {
           userLocation[0],
           userLocation[1],
           poi.lat,
-          poi.lng
+          poi.lng,
         );
         return distance <= 5; // 5 km
       })
@@ -37,11 +37,11 @@ export default function MapPage() {
 
   return (
     <div className="relative h-screen w-full">
-      <RouteInfoPanel/>
-     <ToolRenderer/>
+      <RouteInfoPanel />
+      <ToolRenderer />
       <Toaster position="top-center" richColors />
       <MapView pois={allPois} userLocation={userLocation} />
-      <FloatingControls/>
+      <FloatingControls />
     </div>
   );
 }

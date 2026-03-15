@@ -1,5 +1,6 @@
 import DialogOverlay from "../ui/DialogOverlay";
 import ExcelImporter from "@/features/import/ExcelImporter";
+import RenderBoard from "../ui/dashboard/RenderBoards.";
 import CoordinateInput from "../../features/textarea/CordinateArea";
 import { useMapStore } from "@/stores/useMapStore";
 
@@ -14,7 +15,9 @@ export default function ToolRenderer() {
       <DialogOverlay open={activePanel === "input"} onClose={closePanel}>
         <CoordinateInput />
       </DialogOverlay>
-
+    <DialogOverlay open={activePanel === "dashboard"} onClose={closePanel}>
+        <RenderBoard />
+      </DialogOverlay>
       {/* Save Panel */}
       {/* <DialogOverlay open={activePanel === "save"} onClose={closePanel}>
         <div className="flex flex-col gap-3">
