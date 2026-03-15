@@ -6,6 +6,8 @@ import LocateControl from "./LocateControl";
 import RouteRenderer from "./RouteRenderer";
 import MapClickHandler from "./MapClickHandler";
 import { createIcons } from "@/lib/marker/markerMaker";
+import { useMapStore } from "@/stores/useMapStore";
+import MapFly from "../route/MapFly";
 
 export type POI = {
   id: number;
@@ -29,18 +31,21 @@ interface MapViewProps {
 }
 
 export default function MapView({ pois, userLocation }: MapViewProps) {
+ 
   const [icons, setIcons] = useState<any>(null);
+  const points = useMapStore((s) => s.points);
 
-  // Load Leaflet icons dynamically on client
   useEffect(() => {
     createIcons().then((loadedIcons) => setIcons(loadedIcons));
+
   }, []);
 
-  if (!icons) return null; // Wait until icons are loaded
+  if (!icons) return null; 
+   
 
   return (
     <MapContainer
-      center={userLocation || [40.758, -73.9855]}
+      center={userLocation || [6.4475, 3.5236]}
       zoom={userLocation ? 14 : 12}
       maxZoom={18}
       style={{ height: "80vh", width: "100%" }}
@@ -51,7 +56,7 @@ export default function MapView({ pois, userLocation }: MapViewProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         maxZoom={19}
       />
-
+  <MapFly points = {points} />
       {/* Clustered POIs */}
       <MarkerClusterGroup>
         {pois.map((poi) => (
@@ -63,8 +68,15 @@ export default function MapView({ pois, userLocation }: MapViewProps) {
           </Marker>
         ))}
       </MarkerClusterGroup>
+{points.map((p, i) => (
+  <Marker key={i} icon={icons.defaultIcon} position={[p.lat, p.lng]}>
 
-      {/* User location marker + radius */}
+     <Popup>
+              <h3 className="font-bold">{`${p.lat},${p.lng}`}</h3>
+             
+            </Popup>
+  </Marker>
+))}
       {userLocation && (
         <>
           <Marker position={userLocation} title="You are here" icon={icons.defaultIcon} />
@@ -82,7 +94,7 @@ export default function MapView({ pois, userLocation }: MapViewProps) {
 
       <LocateControl icons = {icons} />
       <MapClickHandler/>
-      <RouteRenderer icons={icons} />   {/* pass icons if needed */}
+      <RouteRenderer icons={icons} />  
     </MapContainer>
   );
 }

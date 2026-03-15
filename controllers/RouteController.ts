@@ -5,15 +5,28 @@ import { toast } from "sonner";
 export async function calculateRoute() {
   const { origin, destination, setRoute } =
     useRouteStore.getState();
- if (!origin || !destination) {
-    toast.error("Waiting for both origin and destination before fetching route.");
-    return; // do nothing until both are set
+
+  if (!origin || !destination) {
+    toast.error("Select both origin and destination first.");
+    return;
   }
 
-  try {
-    const route = await fetchRoute(origin, destination);
-    setRoute(route);
-  } catch (err) {
-    toast.error("Failed to calculate route:", err);
-  }
+  await toast.promise(
+    fetchRoute(origin, destination),
+    {
+      loading: "Calculating best route...",
+      success: (route) => {
+        setRoute(route);
+        return "Route calculated successfully 🚗";
+      },
+      error: (err) => {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to calculate route";
+
+        return message;
+      },
+    }
+  );
 }
