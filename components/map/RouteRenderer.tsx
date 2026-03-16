@@ -14,9 +14,9 @@ export default function RouteRenderer({ icons }: RouteRendererProps) {
 
   useEffect(() => {
     if (route?.geometry) {
-      setPolylineCoords(route.geometry.map((p) => [p.lat, p.lng]));
+  setTimeout(()=>setPolylineCoords(route.geometry.map((p) => [p.lat, p.lng])),0)
     } else {
-      setPolylineCoords([]);
+   setTimeout(()=>setPolylineCoords([]),0)
     }
   }, [route]);
 

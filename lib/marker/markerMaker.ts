@@ -1,7 +1,15 @@
-
 "use client";
 
-export async function createIcons() {
+import type { Icon } from "leaflet";
+
+export interface Icons {
+  originIcon: Icon;
+  destinationIcon: Icon;
+  defaultIcon: Icon;
+  duplicateIcon: Icon; // highlight duplicates
+}
+
+export async function createIcons(): Promise<Icons> {
   const L = (await import("leaflet")).default; // dynamically import only on client
 
   const originIcon = L.icon({
@@ -25,13 +33,16 @@ export async function createIcons() {
     popupAnchor: [0, -32],
   });
 
-  return { originIcon, destinationIcon, defaultIcon };
+  const duplicateIcon = L.icon({
+    iconUrl: "/marker/duplicate.png", // you can make this red or yellow
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+
+  return { originIcon, destinationIcon, defaultIcon, duplicateIcon };
 }
 
 export interface RouteRendererProps {
-  icons: {
-    originIcon: any;
-    destinationIcon: any;
-    defaultIcon: any;
-  };
+  icons: Icons;
 }

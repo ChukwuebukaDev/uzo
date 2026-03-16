@@ -1,16 +1,16 @@
 "use client";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-
+import { LatLngBoundsExpression } from "leaflet";
 export type ToolPanel = "none"|"dashboard" | "excel" | "input" | "save";
 
 export type Point = {
-  id: string;          // unique ID
+  id: string;          
   lat: number;
   lng: number;
-  name: string;        // default "soccer"
-  category?: string;   // e.g., Soccer, School, Hospital
-  createdAt: number;   // timestamp
+  name: string;       
+  category?: string;   
+  createdAt: number;  
 };
 
 export type Dataset = {
@@ -27,15 +27,14 @@ export interface Activity {
 }
 
 interface MapState {
-  // Map & Dashboard State
   points: Point[];
   activePanel: ToolPanel;
-
-  // Datasets
+ fitBounds?: (bounds: LatLngBoundsExpression) => void;
+ 
   datasets: Dataset[];
   activeDatasetId?: string;
 
-  // Activity Log
+
   activities: Activity[];
 
   // Actions
@@ -46,9 +45,6 @@ interface MapState {
 
   openPanel: (panel: ToolPanel) => void;
   closePanel: () => void;
-
-
-  // Dataset Actions
   addDataset: (dataset: Dataset) => void;
   setActiveDataset: (id: string) => void;
   renameDataset: (id: string, name: string) => void;
@@ -66,7 +62,7 @@ export const useMapStore = create<MapState>()(
       datasets: [],
       activeDatasetId: undefined,
       activities: [],
-
+      fitBounds:undefined,
       setPoints: (points) => set({ points }),
       addPoints: (newPoints) =>
         set((state) => {

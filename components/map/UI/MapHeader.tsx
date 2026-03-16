@@ -12,6 +12,7 @@ export default function MapHeader() {
     { name: "Home", path: "/" },
     { name: "Map", path: "/map" },
     { name: "About", path: "/about" },
+    {name:'Settings',path:'/settings'},
   ];
 
   return (
