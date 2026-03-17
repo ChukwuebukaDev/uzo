@@ -1,25 +1,25 @@
-import { useMap } from "react-leaflet";
+"use client";
+
 import { useEffect } from "react";
-import { Coordinates } from "@/types/routes";
+import { useMap } from "react-leaflet";
+import L from "leaflet";
+import { Point } from "@/stores/useMapStore";
 
-interface Props {
-  points: Coordinates[];
-}
-
-export default function MapFly({ points }: Props) {
+export default function MapFly({ points }: { points: Point[] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!points || points.length === 0) return;
+    if (!points.length) return;
 
-    const { lat, lng } = points[0];
-setTimeout(()=>{
-   map.flyTo([lat, lng], 14, {
-      animate: true,
-      duration: 3,
-    });  
-},3000)
-   
+    map.whenReady(() => {
+      requestAnimationFrame(() => {
+        const bounds = L.latLngBounds(
+          points.map((p) => [p.lat, p.lng])
+        );
+
+        map.fitBounds(bounds, { padding: [40, 40] });
+      });
+    });
   }, [points, map]);
 
   return null;

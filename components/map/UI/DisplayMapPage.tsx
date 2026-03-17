@@ -1,8 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { POI } from "@/components/map/Mapview";
-import { pois as defaultPois } from "@/app/lib/Pois";
+import { pois as defaultPois,POI } from "@/app/lib/Pois";
 import { getDistance } from "@/lib/distance";
 import { Toaster } from "sonner";
 import ToolRenderer from "@/components/map/ToolRenderer";

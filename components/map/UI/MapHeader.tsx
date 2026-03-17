@@ -11,6 +11,7 @@ export default function MapHeader() {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Map", path: "/map" },
+    {name: 'Plan Routes', path:'/planRoutes'},
     { name: "About", path: "/about" },
     {name:'Settings',path:'/settings'},
   ];

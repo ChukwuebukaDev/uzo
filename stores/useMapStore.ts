@@ -1,13 +1,13 @@
 "use client";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { LatLngBoundsExpression } from "leaflet";
 export type ToolPanel = "none"|"dashboard" | "excel" | "input" | "save";
 
 export type Point = {
   id: string;          
   lat: number;
   lng: number;
+  description?:string,
   name: string;       
   category?: string;   
   createdAt: number;  
@@ -28,8 +28,9 @@ export interface Activity {
 
 interface MapState {
   points: Point[];
+  mapCenter:[number,number];
+  zoom:number;
   activePanel: ToolPanel;
- fitBounds?: (bounds: LatLngBoundsExpression) => void;
  
   datasets: Dataset[];
   activeDatasetId?: string;
@@ -42,7 +43,7 @@ interface MapState {
   addPoints: (points: Point[]) => void;
   replacePoints: (points: Point[]) => void;
   clearPoints: () => void;
-
+setMapView: (center: [number, number], zoom: number) => void;
   openPanel: (panel: ToolPanel) => void;
   closePanel: () => void;
   addDataset: (dataset: Dataset) => void;
@@ -57,12 +58,16 @@ export const useMapStore = create<MapState>()(
   persist(
     (set, get) => ({
       points: [],
+      mapCenter:[6.4475, 3.5236],
+      zoom:12,
       activePanel: "none",
       dashboardOpen: true,
       datasets: [],
       activeDatasetId: undefined,
       activities: [],
       fitBounds:undefined,
+      setMapView: (center, zoom) =>
+  set({ mapCenter: center, zoom }),
       setPoints: (points) => set({ points }),
       addPoints: (newPoints) =>
         set((state) => {
@@ -102,7 +107,7 @@ export const useMapStore = create<MapState>()(
     }),
     {
       name: "uzo-map-storage",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

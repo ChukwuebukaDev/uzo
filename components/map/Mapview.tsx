@@ -3,20 +3,16 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useMapStore, Point as StorePoint } from "@/stores/useMapStore";
+import { POI } from "@/app/lib/Pois";
 import LocateControl from "./LocateControl";
 import RouteRenderer from "./RouteRenderer";
-import L from "leaflet";
 import MapClickHandler from "./MapClickHandler";
 import MapFly from "../route/MapFly";
-import { createIcons, Icons } from "@/lib/marker/markerMaker"; // Proper typing
+import MarkerCard from "./marker/MarkerCard";
+import { createIcons, Icons } from "@/lib/marker/markerMaker"; 
+import { mergePOIsByRadius } from "@/app/lib/Pois";
 import MapInitializer from "./UI/MapInitializer";
-export type POI = {
-  id: number;
-  name: string;
-  description: string;
-  lat: number;
-  lng: number;
-};
+import FocusMarker from "./marker/FocusMarker";
 
 // Dynamic React-Leaflet imports (no SSR)
 const MapContainer = dynamic(
@@ -48,14 +44,10 @@ interface MapViewProps {
 
 export default function MapView({ pois, userLocation }: MapViewProps) {
   const [icons, setIcons] = useState<Icons | null>(null);
+  const mapCenter = useMapStore((s) => s.mapCenter);
+  const zoom = useMapStore((s) => s.zoom);
   const points = useMapStore((s) => s.points);
-  useEffect(() => {
-    const map = useMapStore.getState().fitBounds;
-    if (!map || points.length === 0) return;
-
-    const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
-    map(bounds);
-  }, [points]);
+const poiGroups = mergePOIsByRadius(pois, 1500);
   useEffect(() => {
     createIcons().then(setIcons);
   }, []);
@@ -82,9 +74,9 @@ export default function MapView({ pois, userLocation }: MapViewProps) {
 
   return (
     <MapContainer
-      center={userLocation || [6.4475, 3.5236]}
-      zoom={userLocation ? 14 : 12}
-      zoomControl = {false}
+      center={mapCenter}
+      zoom={zoom}
+      zoomControl={false}
       maxZoom={18}
       style={{ height: "80vh", width: "100%" }}
       scrollWheelZoom={true}
@@ -95,38 +87,59 @@ export default function MapView({ pois, userLocation }: MapViewProps) {
         maxZoom={19}
       />
       <MapInitializer />
-      {/* Auto-zoom / Fit points */}
       <MapFly points={points} />
 
-      {/* POIs cluster */}
-      <MarkerClusterGroup>
-        {pois.map((poi) => (
-          <Marker
-            key={poi.id}
-            position={[poi.lat, poi.lng]}
-            icon={icons.defaultIcon}
-          >
-            <Popup>
-              <h3 className="font-bold">{poi.name}</h3>
-              <p>{poi.description}</p>
-            </Popup>
-          </Marker>
-        ))}
-      </MarkerClusterGroup>
+     <>
+  {/* Clustered markers */}
+  <MarkerClusterGroup>
+    {pois.map((poi) => (
+      <Marker
+        key={poi.id}
+        position={[poi.lat, poi.lng]}
+        icon={icons.defaultIcon}
+      >
+        <Popup>
+          <h3>{poi.name}</h3>
+        </Popup>
+      </Marker>
+    ))}
+  </MarkerClusterGroup>
+
+{poiGroups.map((group, i) => {
+  const lat = group.reduce((sum, p) => sum + p.lat, 0) / group.length;
+  const lng = group.reduce((sum, p) => sum + p.lng, 0) / group.length;
+  const radius = 3000; 
+  return (
+    <Circle
+      key={`group-${i}`}
+      center={[lat, lng]}
+      radius={radius}
+      pathOptions={{
+        color: "#facc15",
+        fillColor: "#facc15",
+        fillOpacity: 0.15,
+        weight: 2,
+      }}
+    />
+  );
+})}
+  {/* Coverage circles outside the cluster */}
+
+</>
 
       {/* Imported points */}
       {points.map((p, i) => (
-        <Marker
+        <FocusMarker
           key={p.id}
           position={[p.lat, p.lng]}
           icon={
             duplicateIndexes.has(i) ? icons.duplicateIcon : icons.defaultIcon
-          } // highlight duplicates
+          }
         >
           <Popup>
-            <h3 className="font-bold">{p.name}</h3>
+            <MarkerCard id={p.id} name={p.name} lat={p.lat} lng={p.lng} />
           </Popup>
-        </Marker>
+        </FocusMarker>
       ))}
 
       {/* User location */}

@@ -14,42 +14,48 @@ export default function CurtainLoader({
     const alreadyShown = sessionStorage.getItem("uzoIntroShown");
 
     if (!alreadyShown) {
-      setShow(true);
-
+      
+      setTimeout(()=>setShow(true),0)
       setTimeout(() => {
         setShow(false);
         sessionStorage.setItem("uzoIntroShown", "true");
-      }, 3200); // total animation time
+      }, 3200);
     }
   }, []);
 
-  if (!show) return <>{children}</>;
-
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden">
+    <>
+    
+      {children}
 
-      {/* Spinner */}
-      <motion.div
-        className="absolute w-14 h-14 border-4 border-gray-500 border-t-white rounded-full"
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-      />
+      {/* Loader OVERLAY */}
+      {show && (
+        <div className="fixed inset-0 z-9999 bg-black flex items-center justify-center overflow-hidden pointer-events-none">
 
-      {/* Left Curtain */}
-      <motion.div
-        initial={{ x: 0 }}
-        animate={{ x: "-100%" }}
-        transition={{ delay: 2, duration: 1.2, ease: "easeInOut" }}
-        className="absolute left-0 top-0 h-full w-1/2 bg-black"
-      />
+          {/* Spinner */}
+          <motion.div
+            className="absolute w-14 h-14 border-4 border-gray-500 border-t-white rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          />
 
-      {/* Right Curtain */}
-      <motion.div
-        initial={{ x: 0 }}
-        animate={{ x: "100%" }}
-        transition={{ delay: 2, duration: 1.2, ease: "easeInOut" }}
-        className="absolute right-0 top-0 h-full w-1/2 bg-black"
-      />
-    </div>
+          {/* Left Curtain */}
+          <motion.div
+            initial={{ x: 0 }}
+            animate={{ x: "-100%" }}
+            transition={{ delay: 2, duration: 1.2, ease: "easeInOut" }}
+            className="absolute left-0 top-0 h-full w-1/2 bg-black"
+          />
+
+          {/* Right Curtain */}
+          <motion.div
+            initial={{ x: 0 }}
+            animate={{ x: "100%" }}
+            transition={{ delay: 2, duration: 1.2, ease: "easeInOut" }}
+            className="absolute right-0 top-0 h-full w-1/2 bg-black"
+          />
+        </div>
+      )}
+    </>
   );
 }

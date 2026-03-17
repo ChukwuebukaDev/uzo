@@ -4,8 +4,8 @@ import { ReactNode, useState, useEffect, useRef } from "react";
 import DialogOverlay from "./DialogOverlay";
 import { HiOutlinePlus, HiOutlineFire } from "react-icons/hi2";
 import { Trash, Pen } from "lucide-react";
-import { Point } from "@/stores/useMapStore";
-
+import { Point ,useMapStore} from "@/stores/useMapStore";
+import { toast } from "sonner";
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -26,9 +26,7 @@ export default function PointConfirmDialog({
   description,
 }: Props) {
 
-  /* -------------------------------------------------- */
-  /* 🔹 Normalize imported points → Store points */
-  /* -------------------------------------------------- */
+const {closePanel} = useMapStore();
 
   const normalize = (pts: Props["points"]): Point[] =>
     pts.map((p) => ({
@@ -94,9 +92,6 @@ export default function PointConfirmDialog({
     );
   };
 
-  /* -------------------------------------------------- */
-  /* 🔹 Editing & Deleting */
-  /* -------------------------------------------------- */
 
   const deletePoint = (i: number) =>
     setList((prev) => prev.filter((_, idx) => idx !== i));
@@ -106,20 +101,18 @@ export default function PointConfirmDialog({
       prev.map((p, idx) => (idx === i ? { ...p, name } : p))
     );
 
-  /* -------------------------------------------------- */
-  /* 🔹 UI */
-  /* -------------------------------------------------- */
+
 
   return (
     <DialogOverlay open={open} onClose={onClose}>
       <div className="relative z-10 w-[90vw] max-w-lg bg-white/90 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 flex flex-col gap-5">
 
-        {/* Header */}
+      
         <h3 className="text-xl font-semibold text-gray-900">
           {title}
         </h3>
 
-        {/* Description */}
+        
         <p className="text-gray-700 text-sm">
           {description ??
             `You uploaded ${list.length} point${
@@ -127,7 +120,7 @@ export default function PointConfirmDialog({
             }. Add or replace existing points?`}
         </p>
 
-        {/* Duplicate Warning */}
+     
         {duplicateIndexes.size > 0 && (
           <div className="bg-red-100 text-red-700 text-sm px-3 py-2 rounded-lg border border-red-300">
             ⚠️ {duplicateIndexes.size} duplicate point
@@ -135,7 +128,6 @@ export default function PointConfirmDialog({
           </div>
         )}
 
-        {/* Preview List */}
         {list.length > 0 && (
           <div className="bg-gray-100 rounded-lg p-3 text-sm flex flex-col gap-2 max-h-56 overflow-y-auto">
 
@@ -151,7 +143,7 @@ export default function PointConfirmDialog({
                       : "hover:bg-gray-200"
                   }`}
               >
-                {/* LEFT */}
+               
                 <div className="flex flex-col flex-1">
 
                   {editingIndex === i ? (
@@ -219,6 +211,8 @@ export default function PointConfirmDialog({
             onClick={() => {
               onAdd(list);
               onClose();
+              toast.success(`${list.length} points successfully added to the map😉`);
+              closePanel();
             }}
             className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1"
           >
@@ -230,6 +224,8 @@ export default function PointConfirmDialog({
             onClick={() => {
               onReplace(list);
               onClose();
+              toast.success(`current points successfully  replaced with ${list.length} points`);
+              closePanel();
             }}
             className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center gap-1"
           >
