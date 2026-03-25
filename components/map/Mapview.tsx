@@ -1,41 +1,21 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
 import { useMapStore, Point as StorePoint } from "@/stores/useMapStore";
 import { POI } from "@/app/lib/Pois";
-import LocateControl from "./LocateControl";
-import RouteRenderer from "./RouteRenderer";
-import MapClickHandler from "./MapClickHandler";
 import MapFly from "../route/MapFly";
 import MarkerCard from "./marker/MarkerCard";
-import { createIcons, Icons } from "@/lib/marker/markerMaker"; 
 import { mergePOIsByRadius } from "@/app/lib/Pois";
-import MapInitializer from "./UI/MapInitializer";
+import { mapProps } from "@/types/map";
 import FocusMarker from "./marker/FocusMarker";
+import {
+  Marker,
+  Circle,
+  Popup,
+  MarkerClusterGroup,
 
-// Dynamic React-Leaflet imports (no SSR)
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((m) => m.MapContainer),
-  { ssr: false },
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((m) => m.TileLayer),
-  { ssr: false },
-);
-const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), {
-  ssr: false,
-});
-const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), {
-  ssr: false,
-});
-const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), {
-  ssr: false,
-});
-const MarkerClusterGroup = dynamic(
-  () => import("react-leaflet-cluster").then((m) => m.default),
-  { ssr: false },
-);
+} from "./leaflet/leaflet";
+import MapContainer from "./MapContainer";
+import { useIconStore } from "@/stores/useIconStore";
 
 interface MapViewProps {
   pois: POI[];
@@ -43,14 +23,11 @@ interface MapViewProps {
 }
 
 export default function MapView({ pois, userLocation }: MapViewProps) {
-  const [icons, setIcons] = useState<Icons | null>(null);
   const mapCenter = useMapStore((s) => s.mapCenter);
   const zoom = useMapStore((s) => s.zoom);
   const points = useMapStore((s) => s.points);
-const poiGroups = mergePOIsByRadius(pois, 1500);
-  useEffect(() => {
-    createIcons().then(setIcons);
-  }, []);
+  const poiGroups = mergePOIsByRadius(pois, 1500);
+  const icons = useIconStore((s) => s.icons);
 
   if (!icons) return null;
 
@@ -71,61 +48,53 @@ const poiGroups = mergePOIsByRadius(pois, 1500);
   };
 
   const duplicateIndexes = findDuplicates(points);
-
+  const mapProperties: mapProps = {
+    zoom,
+    center: mapCenter,
+    zoomControl: false,
+    scrollWheelZoom: false,
+    maxZoom: 18,
+    searchControl: false,
+  };
   return (
-    <MapContainer
-      center={mapCenter}
-      zoom={zoom}
-      zoomControl={false}
-      maxZoom={18}
-      style={{ height: "80vh", width: "100%" }}
-      scrollWheelZoom={true}
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
-      />
-      <MapInitializer />
+    <MapContainer properties={mapProperties}>
       <MapFly points={points} />
+      <>
+        {/* Clustered markers */}
+        {/* <MarkerClusterGroup>
+          {pois.map((poi) => (
+            <Marker
+              key={poi.id}
+              position={[poi.lat, poi.lng]}
+              icon={icons.defaultIcon}
+            >
+              <Popup>
+                <h3>{poi.name}</h3>
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup> */}
 
-     <>
-  {/* Clustered markers */}
-  <MarkerClusterGroup>
-    {pois.map((poi) => (
-      <Marker
-        key={poi.id}
-        position={[poi.lat, poi.lng]}
-        icon={icons.defaultIcon}
-      >
-        <Popup>
-          <h3>{poi.name}</h3>
-        </Popup>
-      </Marker>
-    ))}
-  </MarkerClusterGroup>
-
-{poiGroups.map((group, i) => {
-  const lat = group.reduce((sum, p) => sum + p.lat, 0) / group.length;
-  const lng = group.reduce((sum, p) => sum + p.lng, 0) / group.length;
-  const radius = 3000; 
-  return (
-    <Circle
-      key={`group-${i}`}
-      center={[lat, lng]}
-      radius={radius}
-      pathOptions={{
-        color: "#facc15",
-        fillColor: "#facc15",
-        fillOpacity: 0.15,
-        weight: 2,
-      }}
-    />
-  );
-})}
-  {/* Coverage circles outside the cluster */}
-
-</>
+        {poiGroups.map((group, i) => {
+          const lat = group.reduce((sum, p) => sum + p.lat, 0) / group.length;
+          const lng = group.reduce((sum, p) => sum + p.lng, 0) / group.length;
+          const radius = 3000;
+          return (
+            <Circle
+              key={`group-${i}`}
+              center={[lat, lng]}
+              radius={radius}
+              pathOptions={{
+                color: "#facc15",
+                fillColor: "#facc15",
+                fillOpacity: 0.15,
+                weight: 2,
+              }}
+            />
+          );
+        })}
+        {/* Coverage circles outside the cluster */}
+      </>
 
       {/* Imported points */}
       {points.map((p, i) => (
@@ -161,10 +130,6 @@ const poiGroups = mergePOIsByRadius(pois, 1500);
           />
         </>
       )}
-
-      <LocateControl icons={icons} />
-      <MapClickHandler />
-      <RouteRenderer icons={icons} />
     </MapContainer>
   );
 }

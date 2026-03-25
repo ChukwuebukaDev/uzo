@@ -48,6 +48,7 @@ export default function ExcelImporter() {
 
       const parsed: Point[] = rows
         .map((row) => {
+          console.log(row)
           const lat = parseFloat(
             getValue(row, "lat", "Lat", "latitude", "Latitude") ?? "",
           );

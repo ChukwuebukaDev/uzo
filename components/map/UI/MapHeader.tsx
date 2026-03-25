@@ -9,17 +9,16 @@ export default function MapHeader() {
   const pathname = usePathname();
 
   const navLinks = [
-    { name: "Home", path: "/" },
+    { name: "Home", path: "/home" },
     { name: "Map", path: "/map" },
-    {name: 'Plan Routes', path:'/planRoutes'},
+    { name: "Plan Routes", path: "/planRoutes" },
     { name: "About", path: "/about" },
-    {name:'Settings',path:'/settings'},
+    { name: "Settings", path: "/settings" },
   ];
 
   return (
     <header className="w-full bg-white/80 backdrop-blur sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
-
         {/* Logo */}
         <Link
           href="/"
@@ -34,11 +33,7 @@ export default function MapHeader() {
             const isActive = pathname === link.path;
 
             return (
-              <Link
-                key={link.path}
-                href={link.path}
-                className="relative group"
-              >
+              <Link key={link.path} href={link.path} className="relative group">
                 <span
                   className={`transition ${
                     isActive ? "text-black" : "text-gray-500"
@@ -50,9 +45,7 @@ export default function MapHeader() {
                 {/* animated underline */}
                 <span
                   className={`absolute left-0 -bottom-1 h-0.5 bg-black transition-all duration-300 ${
-                    isActive
-                      ? "w-full"
-                      : "w-0 group-hover:w-full"
+                    isActive ? "w-full" : "w-0 group-hover:w-full"
                   }`}
                 />
               </Link>
@@ -60,16 +53,13 @@ export default function MapHeader() {
           })}
         </nav>
 
-
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden cursor-pointer text-2xl pointer-cursor"
         >
           ☰
         </button>
-
       </div>
-
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ${

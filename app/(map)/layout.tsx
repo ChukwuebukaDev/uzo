@@ -7,13 +7,11 @@ export default function MapLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-auto">
       <MapHeader />
-
       <main className="flex-1 relative">
         {children}
-      </main>
-
+      </main> 
       <MapFooter />
     </div>
   );

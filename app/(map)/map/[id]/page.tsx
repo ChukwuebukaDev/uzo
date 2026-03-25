@@ -1,30 +1,46 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMapStore, Point } from "@/stores/useMapStore";
 import { getAddressString } from "@/utilities/navigateToPoint";
 import { MapPin, Calendar, Trash2, Edit2 } from "lucide-react";
-
+import { mapProps } from "@/types/map";
+import { Suspense } from "react";
+import MapContainer from "@/components/map/MapContainer";
+import { Marker } from "@/components/map/leaflet/leaflet";
+import { useIconStore } from "@/stores/useIconStore";
 interface PointPageProps {
   params: Promise<{ id: string }>;
 }
 
+
 export default function PointPage({ params }: PointPageProps) {
   const router = useRouter();
   const points = useMapStore((s) => s.points);
-
   const [point, setPoint] = useState<Point | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [loadingAddress, setLoadingAddress] = useState(false);
+  const icons = useIconStore((s) => s.icons);
 
-  // Fetch point based on ID
+
+const position: [number, number] | null = point
+  ? [point.lat, point.lng]
+  : null;
+  const mapProperties: mapProps = {
+    zoom:6,
+    center:position ?? [11.971781,8.565484],
+    zoomControl: false,
+    scrollWheelZoom: false,
+    maxZoom: 18,
+    searchControl:false
+  };
+
   useEffect(() => {
     (async () => {
       const resolvedParams = await params;
       const found = points.find((p) => p.id === resolvedParams.id);
       setPoint(found ?? null);
-
+      
       if (found) {
         setLoadingAddress(true);
         const addr = await getAddressString(found.lat, found.lng);
@@ -33,7 +49,7 @@ export default function PointPage({ params }: PointPageProps) {
       }
     })();
   }, [params, points]);
-
+if (!icons) return null;
   if (!point)
     return (
       <div className="text-center mt-20 text-gray-600 dark:text-zinc-400 px-4">
@@ -117,8 +133,16 @@ export default function PointPage({ params }: PointPageProps) {
       {/* Map Placeholder */}
       <section className="mt-8 h-72 sm:h-96 rounded-2xl overflow-hidden shadow-lg">
         {/* Leaflet/Mapbox map can go here */}
-        <div className="w-full h-full bg-gray-200 dark:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 text-lg">
-          Map will appear here
+        <div className="w-full relative h-full bg-gray-200 dark:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 text-lg">
+         
+
+          <Suspense fallback = {<div className="text-6xl z-500">Map Loading...</div>}>
+<MapContainer properties={mapProperties}>
+{position && (
+  <Marker position={position} icon={icons.defaultIcon}/>
+)}
+</MapContainer>
+          </Suspense>
         </div>
       </section>
     </div>

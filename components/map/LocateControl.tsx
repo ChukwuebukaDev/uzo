@@ -55,7 +55,7 @@ export default function LocateControl({ icons }: RouteRendererProps) {
       {/* Locate Me Button */}
       <button
         onClick={handleLocate}
-        className={`fixed bottom-6 cursor-pointer right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
+        className={`fixed top-20 cursor-pointer right-6 md:bottom-10 md:right-10 z-500 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
           isLocating ? "animate-pulse" : ""
         }`}
         title="Find My Location"

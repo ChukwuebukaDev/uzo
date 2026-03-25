@@ -1,6 +1,5 @@
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
-
 export default function RootLayout({
   children,
 }: {
@@ -9,7 +8,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex flex-col h-full">
-          {children}
+      {children}
       </body>
     </html>
   );

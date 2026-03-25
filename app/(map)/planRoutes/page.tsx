@@ -5,7 +5,9 @@ import { useMapStore, Point } from "@/stores/useMapStore";
 import { getAddressString } from "@/utilities/navigateToPoint";
 import { MapPin } from "lucide-react";
 import DialogOverlay from "@/components/ui/DialogOverlay";
-
+import { mapProps } from "@/types/map";
+import ZipUp from "@/utilities/AppZip";
+import MapContainer from "@/components/map/MapContainer";
 type User = { id: string; name: string };
 
 export default function PlanRoute() {
@@ -15,8 +17,15 @@ export default function PlanRoute() {
   const [loadingAddress, setLoadingAddress] = useState(false);
   const [note, setNote] = useState("");
   const [assignedUser, setAssignedUser] = useState<User | null>(null);
-  const { closePanel } = useMapStore();
 
+const mapProperties:mapProps = {
+  zoom:6,
+  center:[9.0765, 7.3986],
+  zoomControl:false,
+  scrollWheelZoom:false,
+  searchControl:true
+
+}
   const users: User[] = [
     { id: "u1", name: "Alice" },
     { id: "u2", name: "Bob" },
@@ -232,11 +241,13 @@ export default function PlanRoute() {
       )}
 
       {/* Map Preview */}
-      <div className="mt-6 sm:mt-8 h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden
+     <ZipUp>
+       <div className="mt-6 relative sm:mt-8 h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden
                       bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl border border-white/20 dark:border-zinc-700/30
                       shadow-lg flex items-center justify-center text-gray-500 dark:text-zinc-400 text-base sm:text-lg">
-        Map preview (interactive map coming soon)
+       <MapContainer properties={mapProperties}/>
       </div>
+     </ZipUp>
     </div>
   );
 }
