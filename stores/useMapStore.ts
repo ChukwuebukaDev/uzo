@@ -77,7 +77,6 @@ export const useMapStore = create<MapState>()(
         }),
       replacePoints: (points) => set({ points }),
       clearPoints: () => set({ points: [] }),
-
       openPanel: (panel) => set({ activePanel: panel }),
       closePanel: () => set({ activePanel: "none" }),
 

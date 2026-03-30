@@ -21,7 +21,7 @@ export default function Hero() {
 
       <div className="relative z-20 px-6 max-w-3xl">
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight sm:leading-snug md:leading-snug text-white">
-          Discover Locations with <span className="text-yellow-400">Uzo</span>{" "}
+          Discover Locations with <span className="text-yellow-400">Uzo</span>
           🌍
         </h1>
 

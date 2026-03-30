@@ -17,6 +17,7 @@ interface PointPageProps {
 export default function PointPage({ params }: PointPageProps) {
   const router = useRouter();
   const points = useMapStore((s) => s.points);
+  const replacePoints = useMapStore(s => s.replacePoints);
   const [point, setPoint] = useState<Point | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [loadingAddress, setLoadingAddress] = useState(false);
@@ -34,6 +35,12 @@ const position: [number, number] | null = point
     maxZoom: 18,
     searchControl:false
   };
+
+  const handleDelete = (n:string)=>{
+    const point = points.filter(p => p.name !== n);
+     replacePoints(point);
+              router.back();
+  }
 
   useEffect(() => {
     (async () => {
@@ -119,7 +126,7 @@ if (!icons) return null;
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row sm:justify-end gap-4 mt-4 sm:mt-0">
-          <button className="flex items-center justify-center gap-2 px-5 py-3 text-base bg-red-500 text-white rounded-xl hover:bg-red-600 transition w-full sm:w-auto">
+          <button onClick={()=> handleDelete(point.name)} className="flex items-center justify-center gap-2 px-5 py-3 text-base bg-red-500 text-white rounded-xl hover:bg-red-600 transition w-full sm:w-auto">
             <Trash2 size={18} />
             Delete
           </button>

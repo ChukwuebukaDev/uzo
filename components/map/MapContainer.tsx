@@ -55,7 +55,7 @@ if(!icons)return;
             icon={icons.defaultIcon}
           />
       <MapInitializer/>
-      <MapClickHandler/>
+      {/*<MapClickHandler/>*/}
       <RouteRenderer icons={icons}/>
       <LocateControl icons={icons}/>
       {children}
