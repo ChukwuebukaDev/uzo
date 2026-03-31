@@ -28,7 +28,7 @@ export default function MapHeader() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-8 text-xl font-medium tracking-tight">
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
 
@@ -36,7 +36,7 @@ export default function MapHeader() {
               <Link key={link.path} href={link.path} className="relative group">
                 <span
                   className={`transition ${
-                    isActive ? "text-black" : "text-gray-500"
+                    isActive ? "text-black" : "text-gray-300"
                   }`}
                 >
                   {link.name}

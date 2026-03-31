@@ -1,34 +1,33 @@
 "use client";
-import dynamic from "next/dynamic";
-import { useState } from "react";
-import { useMap, useMapEvents } from "react-leaflet";
-import { RouteRendererProps } from "@/lib/marker/markerMaker";
 
-const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), {
-  ssr: false,
-});
-const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), {
-  ssr: false,
-});
+import { useEffect, useState } from "react";
+import mapboxgl from "mapbox-gl";
 
-export default function LocateControl({ icons }: RouteRendererProps) {
-  const map = useMap();
-  const [location, setLocation] = useState<[number, number] | null>(null);
+export default function LocateControl({ map }: { map: mapboxgl.Map | null }) {
   const [isLocating, setIsLocating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  useMapEvents({
-    movestart: () => {
-      setIsDragging(true);
-    },
-    moveend: () => {
-      setIsDragging(false);
-    },
-  });
+  // Track dragging (like Leaflet's useMapEvents)
+  useEffect(() => {
+    if (!map) return;
+
+    const handleMoveStart = () => setIsDragging(true);
+    const handleMoveEnd = () => setIsDragging(false);
+
+    map.on("movestart", handleMoveStart);
+    map.on("moveend", handleMoveEnd);
+
+    return () => {
+      map.off("movestart", handleMoveStart);
+      map.off("moveend", handleMoveEnd);
+    };
+  }, [map]);
 
   const handleLocate = () => {
+    if (!map || !map.isStyleLoaded()) return;
+
     if (!navigator.geolocation) {
-      alert("Geolocation not supported by your browser.");
+      alert("Geolocation not supported.");
       return;
     }
 
@@ -36,16 +35,64 @@ export default function LocateControl({ icons }: RouteRendererProps) {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords: [number, number] = [
-          pos.coords.latitude,
-          pos.coords.longitude,
-        ];
-        setLocation(coords);
-        map.flyTo(coords, 14, { animate: true, duration: 2 });
-        setTimeout(() => setIsLocating(false), 1200); // stop pulsing after animation
+        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude;
+
+        // Fly to location
+        map.flyTo({
+          center: [lng, lat],
+          zoom: 14,
+          duration: 2000,
+        });
+
+        // ----------------- MARKER -----------------
+        const el = document.createElement("div");
+        el.className = "w-4 h-4 bg-blue-600 rounded-full shadow-lg";
+
+        const marker = new mapboxgl.Marker({ element: el }).setLngLat([
+          lng,
+          lat,
+        ]);
+
+        marker.addTo(map);
+        // ----------------- CIRCLE -----------------
+        const circleGeoJSON = createCircle([lng, lat], 0.1); // ~100m
+
+        if (map.getSource("user-circle")) {
+          (map.getSource("user-circle") as mapboxgl.GeoJSONSource).setData(
+            circleGeoJSON,
+          );
+        } else {
+          map.addSource("user-circle", {
+            type: "geojson",
+            data: circleGeoJSON,
+          });
+
+          map.addLayer({
+            id: "user-circle-fill",
+            type: "fill",
+            source: "user-circle",
+            paint: {
+              "fill-color": "#3b82f6",
+              "fill-opacity": 0.2,
+            },
+          });
+
+          map.addLayer({
+            id: "user-circle-stroke",
+            type: "line",
+            source: "user-circle",
+            paint: {
+              "line-color": "#3b82f6",
+              "line-width": 2,
+            },
+          });
+        }
+
+        setTimeout(() => setIsLocating(false), 1200);
       },
       (err) => {
-        alert("Unable to retrieve location. Please allow location access.");
+        alert("Location access denied.");
         console.warn(err);
         setIsLocating(false);
       },
@@ -54,46 +101,51 @@ export default function LocateControl({ icons }: RouteRendererProps) {
   };
 
   return (
-    <>
-      {/* Circle around user */}
-      {location && (
-        <Circle
-          center={location}
-          radius={100}
-          pathOptions={{
-            color: "#3b82f6",
-            fillColor: "#3b82f6",
-            fillOpacity: 0.2,
-          }}
-        />
-      )}
-
-      {/* User Marker */}
-      {location && <Marker position={location} icon={icons.defaultIcon} />}
-
-      {/* Locate Me Button */}
-      <button
-        onClick={handleLocate}
-        className={`fixed top-20 transition-opacity duration-500 cursor-pointer ${isDragging ? "opacity-0" : "opacity-100"} right-6 md:bottom-10 md:right-10 z-500 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
-          isLocating ? "animate-pulse" : ""
-        }`}
-        title="Find My Location"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 3v1m0 16v1m8-9h1M3 12H2m9-9a9 9 0 110 18 9 9 0 010-18zm0 4a5 5 0 100 10 5 5 0 000-10z"
-          />
-        </svg>
-      </button>
-    </>
+    <button
+      onClick={handleLocate}
+      className={`fixed top-20 right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition-all duration-300 ${
+        isDragging ? "opacity-0" : "opacity-100"
+      } ${isLocating ? "animate-pulse" : ""}`}
+    >
+      📍
+    </button>
   );
+}
+
+// ----------------- HELPER -----------------
+function createCircle(
+  center: [number, number],
+  radiusInKm: number,
+  points = 64,
+): GeoJSON.Feature<GeoJSON.Polygon> {
+  const coords = {
+    latitude: center[1],
+    longitude: center[0],
+  };
+
+  const km = radiusInKm;
+
+  const ret: number[][] = [];
+
+  const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
+  const distanceY = km / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+
+    ret.push([coords.longitude + x, coords.latitude + y]);
+  }
+
+  ret.push(ret[0]);
+
+  return {
+    type: "Feature",
+    geometry: {
+      type: "Polygon",
+      coordinates: [ret],
+    },
+    properties: {},
+  };
 }
