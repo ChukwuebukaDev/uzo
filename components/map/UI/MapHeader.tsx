@@ -17,7 +17,7 @@ export default function MapHeader() {
   ];
 
   return (
-    <header className="w-full bg-white/80 backdrop-blur sticky top-0 z-50">
+    <header className="w-full bg-white/80 dark:bg-neutral-700 dark:text-white backdrop-blur sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
         {/* Logo */}
         <Link

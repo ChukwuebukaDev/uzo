@@ -1,18 +1,30 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { useMap } from "react-leaflet";
+import { useMap, useMapEvents } from "react-leaflet";
 import { RouteRendererProps } from "@/lib/marker/markerMaker";
 
-const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
-
-
+const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), {
+  ssr: false,
+});
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), {
+  ssr: false,
+});
 
 export default function LocateControl({ icons }: RouteRendererProps) {
   const map = useMap();
   const [location, setLocation] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useMapEvents({
+    movestart: () => {
+      setIsDragging(true);
+    },
+    moveend: () => {
+      setIsDragging(false);
+    },
+  });
 
   const handleLocate = () => {
     if (!navigator.geolocation) {
@@ -24,7 +36,10 @@ export default function LocateControl({ icons }: RouteRendererProps) {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        const coords: [number, number] = [
+          pos.coords.latitude,
+          pos.coords.longitude,
+        ];
         setLocation(coords);
         map.flyTo(coords, 14, { animate: true, duration: 2 });
         setTimeout(() => setIsLocating(false), 1200); // stop pulsing after animation
@@ -34,7 +49,7 @@ export default function LocateControl({ icons }: RouteRendererProps) {
         console.warn(err);
         setIsLocating(false);
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   };
 
@@ -45,17 +60,21 @@ export default function LocateControl({ icons }: RouteRendererProps) {
         <Circle
           center={location}
           radius={100}
-          pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.2 }}
+          pathOptions={{
+            color: "#3b82f6",
+            fillColor: "#3b82f6",
+            fillOpacity: 0.2,
+          }}
         />
       )}
 
       {/* User Marker */}
-      {location &&  <Marker position={location} icon={icons.defaultIcon} />}
+      {location && <Marker position={location} icon={icons.defaultIcon} />}
 
       {/* Locate Me Button */}
       <button
         onClick={handleLocate}
-        className={`fixed top-20 cursor-pointer right-6 md:bottom-10 md:right-10 z-500 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
+        className={`fixed top-20 transition-opacity duration-500 cursor-pointer ${isDragging ? "opacity-0" : "opacity-100"} right-6 md:bottom-10 md:right-10 z-500 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition transform duration-300 ${
           isLocating ? "animate-pulse" : ""
         }`}
         title="Find My Location"

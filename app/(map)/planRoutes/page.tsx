@@ -18,14 +18,13 @@ export default function PlanRoute() {
   const [note, setNote] = useState("");
   const [assignedUser, setAssignedUser] = useState<User | null>(null);
 
-const mapProperties:mapProps = {
-  zoom:6,
-  center:[9.0765, 7.3986],
-  zoomControl:false,
-  scrollWheelZoom:false,
-  searchControl:true
-
-}
+  const mapProperties: mapProps = {
+    zoom: 6,
+    center: [9.0765, 7.3986],
+    zoomControl: false,
+    scrollWheelZoom: false,
+    searchControl: true,
+  };
   const users: User[] = [
     { id: "u1", name: "Alice" },
     { id: "u2", name: "Bob" },
@@ -37,7 +36,7 @@ const mapProperties:mapProps = {
   // Resolve address for selected point
   useEffect(() => {
     if (!selectedPoint) return;
-    setTimeout(()=>setLoadingAddress(true),0)
+    setTimeout(() => setLoadingAddress(true), 0);
     getAddressString(selectedPoint.lat, selectedPoint.lng).then((addr) => {
       setAddress(addr);
       setLoadingAddress(false);
@@ -47,7 +46,7 @@ const mapProperties:mapProps = {
   // Fake total distance
   useEffect(() => {
     if (points.length > 0)
-     setTimeout(()=>setTotalDistance(points.length * 2.5),0)
+      setTimeout(() => setTotalDistance(points.length * 2.5), 0);
   }, [points]);
 
   const handleAssign = () => {
@@ -63,7 +62,7 @@ const mapProperties:mapProps = {
       {/* Floating Back Button */}
       <button
         onClick={() => window.history.back()}
-        className="fixed top-5 left-5 z-50 flex items-center gap-2 px-4 py-3
+        className="fixed left-0 z-50 flex items-center gap-2 
                    bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl
                    rounded-xl shadow-lg hover:bg-white/50 dark:hover:bg-zinc-900/50
                    transition text-base sm:text-lg"
@@ -72,10 +71,12 @@ const mapProperties:mapProps = {
       </button>
 
       {/* Floating Summary Card */}
-      <div className="fixed top-20 right-5 z-50 p-3 w-44 sm:w-52
+      <div
+        className="fixed top-20 right-5 z-50 p-3 w-44 sm:w-52
                       bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl
                       border border-white/20 dark:border-zinc-700/30 rounded-2xl
-                      shadow-lg flex flex-col gap-1 text-sm sm:text-base">
+                      shadow-lg flex flex-col gap-1 text-sm sm:text-base"
+      >
         <p className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg">
           Summary
         </p>
@@ -95,12 +96,16 @@ const mapProperties:mapProps = {
 
       {/* Points List */}
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-        <div className="flex-1 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto p-4
+        <div
+          className="flex-1 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto p-4
                         bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl
                         border border-white/20 dark:border-zinc-700/30
-                        rounded-2xl shadow-lg">
+                        rounded-2xl shadow-lg"
+        >
           {points.length === 0 && (
-            <p className="text-gray-600 dark:text-zinc-400">No points available.</p>
+            <p className="text-gray-600 dark:text-zinc-400">
+              No points available.
+            </p>
           )}
           {points.map((p) => (
             <button
@@ -116,20 +121,26 @@ const mapProperties:mapProps = {
                 <p className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1">
                   {p.name}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-zinc-300">{p.category}</p>
+                <p className="text-sm text-gray-600 dark:text-zinc-300">
+                  {p.category}
+                </p>
                 <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
                   {`${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`}
                 </p>
               </div>
-              <span className="text-sm text-gray-500 dark:text-zinc-400">→</span>
+              <span className="text-sm text-gray-500 dark:text-zinc-400">
+                →
+              </span>
             </button>
           ))}
         </div>
 
         {/* Desktop / iPad Assign Panel */}
-        <div className="hidden lg:flex flex-1 sticky top-32 p-4 sm:p-6 rounded-2xl
+        <div
+          className="hidden lg:flex flex-1 sticky top-32 p-4 sm:p-6 rounded-2xl
                         bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl
-                        border border-white/20 dark:border-zinc-700/30 shadow-lg flex-col gap-3">
+                        border border-white/20 dark:border-zinc-700/30 shadow-lg flex-col gap-3"
+        >
           {selectedPoint && (
             <>
               <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
@@ -138,7 +149,9 @@ const mapProperties:mapProps = {
               <p className="flex items-center gap-2 text-gray-600 dark:text-zinc-300 text-sm sm:text-base">
                 <MapPin size={16} />
                 <span className="font-medium truncate">
-                  {loadingAddress ? "Resolving address..." : address || "Unknown location"}
+                  {loadingAddress
+                    ? "Resolving address..."
+                    : address || "Unknown location"}
                 </span>
               </p>
               <textarea
@@ -152,7 +165,9 @@ const mapProperties:mapProps = {
               <select
                 value={assignedUser?.id || ""}
                 onChange={(e) =>
-                  setAssignedUser(users.find((u) => u.id === e.target.value) || null)
+                  setAssignedUser(
+                    users.find((u) => u.id === e.target.value) || null,
+                  )
                 }
                 className="w-full p-3 rounded-xl border border-white/20 dark:border-zinc-700/30
                            bg-white/20 dark:bg-zinc-800/30 text-gray-900 dark:text-white
@@ -186,17 +201,21 @@ const mapProperties:mapProps = {
       {selectedPoint && (
         <div className="lg:hidden">
           <DialogOverlay open={true} onClose={() => setSelectedPoint(null)}>
-            <section className="fixed inset-4 m-auto w-11/12 sm:w-96 p-4 sm:p-6
+            <section
+              className="fixed inset-4 m-auto w-11/12 sm:w-96 p-4 sm:p-6
                                 bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl
                                 border border-white/20 dark:border-zinc-700/30
-                                rounded-2xl shadow-lg flex flex-col gap-3">
+                                rounded-2xl shadow-lg flex flex-col gap-3"
+            >
               <div className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
                 {selectedPoint.name}
               </div>
               <p className="flex items-center gap-2 text-gray-600 dark:text-zinc-300 text-sm sm:text-base">
                 <MapPin size={16} />
                 <span className="font-medium truncate">
-                  {loadingAddress ? "Resolving address..." : address || "Unknown location"}
+                  {loadingAddress
+                    ? "Resolving address..."
+                    : address || "Unknown location"}
                 </span>
               </p>
               <textarea
@@ -210,7 +229,9 @@ const mapProperties:mapProps = {
               <select
                 value={assignedUser?.id || ""}
                 onChange={(e) =>
-                  setAssignedUser(users.find((u) => u.id === e.target.value) || null)
+                  setAssignedUser(
+                    users.find((u) => u.id === e.target.value) || null,
+                  )
                 }
                 className="w-full p-3 rounded-xl border border-white/20 dark:border-zinc-700/30
                            bg-white/20 dark:bg-zinc-800/30 text-gray-900 dark:text-white
@@ -241,13 +262,15 @@ const mapProperties:mapProps = {
       )}
 
       {/* Map Preview */}
-     <ZipUp>
-       <div className="mt-6 relative sm:mt-8 h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden
+      <ZipUp>
+        <div
+          className="mt-6 relative sm:mt-8 h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden
                       bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl border border-white/20 dark:border-zinc-700/30
-                      shadow-lg flex items-center justify-center text-gray-500 dark:text-zinc-400 text-base sm:text-lg">
-       <MapContainer properties={mapProperties}/>
-      </div>
-     </ZipUp>
+                      shadow-lg flex items-center justify-center text-gray-500 dark:text-zinc-400 text-base sm:text-lg"
+        >
+          <MapContainer properties={mapProperties} />
+        </div>
+      </ZipUp>
     </div>
   );
 }

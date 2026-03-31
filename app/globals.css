@@ -17,27 +17,39 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+button {
+  cursor: pointer;
+}
 .uzo-pulsing-marker span {
   display: block;
-  width: 1.25rem; 
-  height: 1.25rem; 
-  background-color: #3b82f6; 
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: #3b82f6;
   border-radius: 9999px;
   animation: pulse 1.2s infinite;
   box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.6; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .uzo-user-marker span {
   display: block;
-  width: 1.25rem; 
-  height: 1.25rem; 
-  background-color: #facc15; 
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: #facc15;
   border-radius: 9999px;
   animation: pulse 1.2s infinite;
   box-shadow: 0 0 8px rgba(250, 204, 21, 0.7);
@@ -108,7 +120,16 @@ body {
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.6; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

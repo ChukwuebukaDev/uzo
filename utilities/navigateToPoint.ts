@@ -1,5 +1,4 @@
 import { Navigate } from "@/components/map/marker/MarkerCard";
-
 export type ReverseGeocodeResult = {
   display_name: string;
   lat: string;
@@ -15,7 +14,7 @@ export type ReverseGeocodeResult = {
     postcode?: string;
   };
 };
-export function navigateToPoint({...point}:Navigate) {
+export function navigateToPoint({ ...point }: Navigate) {
   if (!point || !point.lat || !point.lng) return;
 
   const url = `https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}&travelmode=${point.travelMode}`;
@@ -24,12 +23,10 @@ export function navigateToPoint({...point}:Navigate) {
   window.open(url, "_blank");
 }
 
-
 export async function coordsToAddress(
   lat: number,
-  lon: number
+  lon: number,
 ): Promise<ReverseGeocodeResult | null> {
-
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -49,11 +46,12 @@ export async function coordsToAddress(
       next: { revalidate: 86400 }, // Next.js caching (1 day)
     });
 
-    if (!res.ok) throw new Error("Failed to fetch");
+    if (!res.ok) {
+      throw new Error("Failed to fetch");
+    }
 
     const data: ReverseGeocodeResult = await res.json();
     return data;
-
   } catch (error) {
     console.error("Reverse geocoding error:", error);
     return null;
@@ -61,7 +59,7 @@ export async function coordsToAddress(
 }
 export async function getAddressString(
   lat: number,
-  lon: number
+  lon: number,
 ): Promise<string | null> {
   const result = await coordsToAddress(lat, lon);
   return result?.display_name ?? null;
