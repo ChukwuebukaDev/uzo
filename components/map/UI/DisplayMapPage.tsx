@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { pois as defaultPois,POI } from "@/app/lib/Pois";
+import { pois as defaultPois, POI } from "@/app/lib/Pois";
 import { getDistance } from "@/lib/distance";
 import { Toaster } from "sonner";
 import ToolRenderer from "@/components/map/ToolRenderer";
@@ -39,7 +39,7 @@ export default function DisplayMapPage() {
       <RouteInfoPanel />
       <ToolRenderer />
       <Toaster position="top-center" richColors />
-      <MapView pois={allPois} userLocation={userLocation} />
+      <MapView />
       <FloatingControls />
     </div>
   );

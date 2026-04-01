@@ -1,33 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import { useMapStore } from "@/stores/useMapStore";
 
-export default function LocateControl({ map }: { map: mapboxgl.Map | null }) {
+interface LocateControlProps {
+  map: mapboxgl.Map | null;
+}
+
+export default function LocateControl({ map }: LocateControlProps) {
   const [isLocating, setIsLocating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const setUserLocation = useMapStore((s) => s.setUserLocation);
 
-  // Track dragging (like Leaflet's useMapEvents)
+  // refs for marker & circle
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+
   useEffect(() => {
     if (!map) return;
 
+    // add built-in Mapbox geolocate control
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserHeading: true,
+    });
+
+    map.addControl(geolocate);
+
+    geolocate.on("geolocate", (e: GeolocationPosition) => {
+      const { longitude: lng, latitude: lat } = e.coords;
+      setUserLocation({ lng, lat });
+    });
+
+    // map dragging state
     const handleMoveStart = () => setIsDragging(true);
     const handleMoveEnd = () => setIsDragging(false);
-
     map.on("movestart", handleMoveStart);
     map.on("moveend", handleMoveEnd);
 
     return () => {
       map.off("movestart", handleMoveStart);
       map.off("moveend", handleMoveEnd);
+      map.removeControl(geolocate);
     };
-  }, [map]);
+  }, [map, setUserLocation]);
 
   const handleLocate = () => {
     if (!map || !map.isStyleLoaded()) return;
 
     if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
+      alert("Geolocation not supported in your browser.");
       return;
     }
 
@@ -35,28 +58,27 @@ export default function LocateControl({ map }: { map: mapboxgl.Map | null }) {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lng = pos.coords.longitude;
-        const lat = pos.coords.latitude;
+        const { longitude: lng, latitude: lat } = pos.coords;
 
-        // Fly to location
-        map.flyTo({
-          center: [lng, lat],
-          zoom: 14,
-          duration: 2000,
-        });
+        // update store
+        setUserLocation({ lng, lat });
+
+        // fly to user location
+        map.flyTo({ center: [lng, lat], zoom: 14, duration: 2000 });
 
         // ----------------- MARKER -----------------
-        const el = document.createElement("div");
-        el.className = "w-4 h-4 bg-blue-600 rounded-full shadow-lg";
+        if (!userMarkerRef.current) {
+          const el = document.createElement("div");
+          el.className = "w-4 h-4 bg-blue-600 rounded-full shadow-lg";
+          userMarkerRef.current = new mapboxgl.Marker({ element: el })
+            .setLngLat([lng, lat])
+            .addTo(map);
+        } else {
+          userMarkerRef.current.setLngLat([lng, lat]);
+        }
 
-        const marker = new mapboxgl.Marker({ element: el }).setLngLat([
-          lng,
-          lat,
-        ]);
-
-        marker.addTo(map);
         // ----------------- CIRCLE -----------------
-        const circleGeoJSON = createCircle([lng, lat], 0.1); // ~100m
+        const circleGeoJSON = createCircle([lng, lat], 0.1); // ~100m radius
 
         if (map.getSource("user-circle")) {
           (map.getSource("user-circle") as mapboxgl.GeoJSONSource).setData(
@@ -67,33 +89,25 @@ export default function LocateControl({ map }: { map: mapboxgl.Map | null }) {
             type: "geojson",
             data: circleGeoJSON,
           });
-
           map.addLayer({
             id: "user-circle-fill",
             type: "fill",
             source: "user-circle",
-            paint: {
-              "fill-color": "#3b82f6",
-              "fill-opacity": 0.2,
-            },
+            paint: { "fill-color": "#3b82f6", "fill-opacity": 0.2 },
           });
-
           map.addLayer({
             id: "user-circle-stroke",
             type: "line",
             source: "user-circle",
-            paint: {
-              "line-color": "#3b82f6",
-              "line-width": 2,
-            },
+            paint: { "line-color": "#3b82f6", "line-width": 2 },
           });
         }
 
         setTimeout(() => setIsLocating(false), 1200);
       },
       (err) => {
-        alert("Location access denied.");
         console.warn(err);
+        alert("Location access denied.");
         setIsLocating(false);
       },
       { enableHighAccuracy: true },
@@ -103,9 +117,10 @@ export default function LocateControl({ map }: { map: mapboxgl.Map | null }) {
   return (
     <button
       onClick={handleLocate}
-      className={`fixed top-20 right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition-all duration-300 ${
-        isDragging ? "opacity-0" : "opacity-100"
-      } ${isLocating ? "animate-pulse" : ""}`}
+      disabled={isLocating}
+      className={`fixed top-20 right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition-all duration-300
+      ${isDragging ? "opacity-0" : "opacity-100"}
+      ${isLocating ? "animate-pulse" : ""}`}
     >
       📍
     </button>
@@ -118,34 +133,22 @@ function createCircle(
   radiusInKm: number,
   points = 64,
 ): GeoJSON.Feature<GeoJSON.Polygon> {
-  const coords = {
-    latitude: center[1],
-    longitude: center[0],
-  };
-
-  const km = radiusInKm;
-
-  const ret: number[][] = [];
-
-  const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
-  const distanceY = km / 110.574;
+  const [lng, lat] = center;
+  const coords: number[][] = [];
+  const distanceX = radiusInKm / (111.32 * Math.cos((lat * Math.PI) / 180));
+  const distanceY = radiusInKm / 110.574;
 
   for (let i = 0; i < points; i++) {
     const theta = (i / points) * (2 * Math.PI);
     const x = distanceX * Math.cos(theta);
     const y = distanceY * Math.sin(theta);
-
-    ret.push([coords.longitude + x, coords.latitude + y]);
+    coords.push([lng + x, lat + y]);
   }
-
-  ret.push(ret[0]);
+  coords.push(coords[0]);
 
   return {
     type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [ret],
-    },
+    geometry: { type: "Polygon", coordinates: [coords] },
     properties: {},
   };
 }

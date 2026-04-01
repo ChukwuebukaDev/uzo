@@ -6,9 +6,8 @@ import { mapProps } from "@/types/map";
 import { MapContainerProps as LeafletProps } from "react-leaflet";
 import LocationSearch from "./LocationSearch";
 import MapInitializer from "./UI/MapInitializer";
-import MapClickHandler from "./MapClickHandler";
 import { useIconStore } from "@/stores/useIconStore";
-import LocateControl from "./LocateControl";
+
 import RouteRenderer from "./RouteRenderer";
 
 interface MapWrapperProps {
@@ -55,7 +54,7 @@ export default function MapContainer({
         <MapInitializer />
         {/*<MapClickHandler/>*/}
         <RouteRenderer icons={icons} />
-        <LocateControl icons={icons} />
+
         {children}
       </LeafletMapContainer>
       {searchControl && <LocationSearch />}

@@ -150,12 +150,12 @@ export default function PointsAnalytics() {
               >
                 <div>
                   <p className="text-sm font-semibold text-white">
-                    Point {p.id}
+                    {p.name || p.id.slice(0, 5)}
                   </p>
                   {distFromUser && (
                     <p className="text-xs text-gray-300">
                       {typeof distFromUser === "number"
-                        ? `${distFromUser.toFixed(2)} km away`
+                        ? `${(distFromUser as number).toFixed(2)} km away`
                         : "Loading..."}
                     </p>
                   )}
