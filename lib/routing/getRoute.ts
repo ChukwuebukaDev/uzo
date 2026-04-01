@@ -1,5 +1,8 @@
 import mapboxgl from "mapbox-gl";
 import { addMarker } from "@/utilities/markerMaker";
+
+const URLFRONTEND =
+  process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
 export async function fetchRoute(
   map: mapboxgl.Map,
   start: { lng: number; lat: number },
@@ -8,7 +11,7 @@ export async function fetchRoute(
 ) {
   try {
     const res = await fetch(
-      `http://localhost:3001/route?start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`,
+      `${URLFRONTEND}/route?start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`,
     );
     if (!res.ok) throw new Error("Failed to fetch route");
 
