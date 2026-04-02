@@ -29,7 +29,9 @@ export default function ExcelImporter() {
     }
     return undefined;
   }
-
+function isPoint(p: Point | null): p is Point {
+  return p !== null;
+}
   async function handleFile(file: File) {
     try {
       const data = await file.arrayBuffer();
@@ -46,41 +48,41 @@ export default function ExcelImporter() {
 
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
 
-      const parsed: Point[] = rows
-        .map((row) => {
-          console.log(row)
-          const lat = parseFloat(
-            getValue(row, "lat", "Lat", "latitude", "Latitude") ?? "",
-          );
 
-          const lng = parseFloat(
-            getValue(row, "lng", "Lng", "longitude", "Longitude") ?? "",
-          );
+const parsed = rows
+  .map((rawRow) => {
+    const row = normalizeRow(rawRow);
 
-          const name = getValue(
-            row,
-            "ihs site id",
-            "IHS Site ID",
-            'IHS SITE ID',
-            "site id",
-            "Site ID",
-            "name",
-            "Name",
-          );
+    const lat = parseFloat(String(row["lat"] ?? row["latitude"] ?? ""));
+    const lng = parseFloat(String(row["lng"] ?? row["longitude"] ?? ""));
 
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-            return null;
-          }
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return null;
+    }
 
-          return {
-            id: crypto.randomUUID(),
-            lat,
-            lng,
-            name,
-            createdAt: Date.now(),
-          };
-        })
-        .filter((p): p is Point => p !== null);
+    const name =
+      row["ihs site id"] ??
+      row["site id"] ??
+      row["name"];
+
+    const meta: Record<string, unknown> = {};
+
+    for (const key in row) {
+      if (!["lat", "latitude", "lng", "longitude", "ihs site id", "site id", "name"].includes(key)) {
+        meta[key] = row[key];
+      }
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      lat,
+      lng,
+      name: name ? String(name) : undefined,
+      createdAt: Date.now(),
+      meta,
+    };
+  })
+  .filter((p): p is Point => p !== null); // 👈 narrowing happens here
 
       if (parsed.length === 0) {
         alert("No valid coordinates found.");
@@ -129,4 +131,13 @@ export default function ExcelImporter() {
       />
     </>
   );
+}
+function normalizeRow(row: Record<string, unknown>) {
+  const normalized: Record<string, unknown> = {};
+
+  for (const key in row) {
+    normalized[key.trim().toLowerCase()] = row[key];
+  }
+
+  return normalized;
 }

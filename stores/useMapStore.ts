@@ -14,6 +14,7 @@ export type Point = {
   name: string;
   category?: string;
   createdAt: number;
+   meta: Record<string, unknown>;
 };
 
 export type Dataset = {
