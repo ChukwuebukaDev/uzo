@@ -1,66 +1,68 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapStore } from "@/stores/useMapStore";
-import LocateControl from "./LocateControl";
-import { fetchRoute } from "@/lib/routing/getRoute";
+import Popup from "./popup/PopUp";
+import MapSkeleton from "./mapskeleton/MapSkeleton";
+import MapboxClickHandler from "./click/MapboxClickHandler";
+
+
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+
+type Feature = GeoJSON.Feature<
+  GeoJSON.Point,
+  {
+    id: string;
+    time: number;
+    mag: number;
+    place: string;
+  }
+>;
 
 export default function MapView() {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const routeMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const listenersAddedRef = useRef(false);
-
+  const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const points = useMapStore((s) => s.points);
   const userLocation = useMapStore((s) => s.userLocation);
-  const getSelectedPoint = useMapStore((s) => s.getSelectedPoint);
-  const getNearestPoint = useMapStore((s) => s.getNearestPoint);
 
-  // ----------------- INIT MAP -----------------
+ // initialize map
   useEffect(() => {
     if (mapRef.current || !mapContainer.current) return;
+    const { lng, lat } = userLocation || { lng: 3.3792, lat: 6.5244 };
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
-      center: [3.3792, 6.5244], // default fallback
+      center: [lng, lat],
       zoom: 12,
     });
 
     mapRef.current = map;
+  
+    map.on("load", () => {
+      setIsMapLoaded(true);
+    });
 
-    map.on("load", () => console.log("Map loaded"));
+    // click outside to close popup
+    map.on("click", () => {
+      setActiveFeature(null);
+    });
+
+  
+    
 
     return () => {
-      routeMarkersRef.current.forEach((m) => m.remove());
-      routeMarkersRef.current = [];
       map.remove();
       mapRef.current = null;
     };
   }, []);
 
-  // ----------------- ROUTE FETCH -----------------
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !userLocation) return;
-
-    const destination = getSelectedPoint() || getNearestPoint();
-    if (!destination) return;
-
-    // wait until map style is loaded
-    if (!map.isStyleLoaded()) {
-      map.once("load", () =>
-        fetchRoute(map, userLocation, destination, routeMarkersRef),
-      );
-    } else {
-      fetchRoute(map, userLocation, destination, routeMarkersRef);
-    }
-  }, [userLocation, points]);
-
-  // ----------------- POINT CLUSTERS -----------------
+  // points and clusters
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
@@ -69,16 +71,25 @@ export default function MapView() {
       type: "FeatureCollection",
       features: points.map((p) => ({
         type: "Feature",
-        properties: { id: p.id },
-        geometry: { type: "Point", coordinates: [p.lng, p.lat] },
+        properties: {
+          id: p.id,
+          time: p.time,
+          mag: p.mag,
+          place: p.place,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [p.lng, p.lat],
+        },
       })),
     };
 
-    // update existing source or create new
-    const existingSource = map.getSource("points") as mapboxgl.GeoJSONSource;
-    if (existingSource) {
-      existingSource.setData(geojson);
+    const source = map.getSource("points") as mapboxgl.GeoJSONSource;
+
+    if (source) {
+      source.setData(geojson);
     } else {
+      // add source and layers only once
       map.addSource("points", {
         type: "geojson",
         data: geojson,
@@ -87,6 +98,7 @@ export default function MapView() {
         clusterRadius: 50,
       });
 
+      // clusters circles
       map.addLayer({
         id: "clusters",
         type: "circle",
@@ -102,19 +114,34 @@ export default function MapView() {
             30,
             "#1d4ed8",
           ],
-          "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 30, 30],
+          "circle-radius": [
+            "step",
+            ["get", "point_count"],
+            18,
+            10,
+            24,
+            30,
+            30,
+          ],
         },
       });
 
+      // cluster count labels
       map.addLayer({
         id: "cluster-count",
         type: "symbol",
         source: "points",
         filter: ["has", "point_count"],
-        layout: { "text-field": "{point_count_abbreviated}", "text-size": 12 },
-        paint: { "text-color": "#fff" },
+        layout: {
+          "text-field": "{point_count_abbreviated}",
+          "text-size": 12,
+        },
+        paint: {
+          "text-color": "#fff",
+        },
       });
 
+      // individual points
       map.addLayer({
         id: "unclustered-point",
         type: "circle",
@@ -129,18 +156,22 @@ export default function MapView() {
       });
     }
 
-    // ----------------- INTERACTIONS -----------------
+    // interactions
     if (!listenersAddedRef.current) {
       listenersAddedRef.current = true;
 
+      //click on cluster to zoom in
       map.on("click", "clusters", (e) => {
         const features = map.queryRenderedFeatures(e.point, {
           layers: ["clusters"],
         });
-        const clusterId = features[0].properties?.cluster_id;
+
+        const clusterId = features[0]?.properties?.cluster_id;
         const source = map.getSource("points") as mapboxgl.GeoJSONSource;
+
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (err || zoom == null) return;
+
           map.easeTo({
             center: (features[0].geometry as any).coordinates,
             zoom,
@@ -148,33 +179,54 @@ export default function MapView() {
         });
       });
 
+  //  click on a marker to show popup
       map.on("click", "unclustered-point", (e) => {
-        const coords = (e.features?.[0].geometry as any).coordinates;
-        const id = e.features?.[0].properties?.id;
-        useMapStore.getState().setSelectedPoint(id);
-        new mapboxgl.Popup()
-          .setLngLat(coords)
-          .setHTML(`<strong>Point ${id}</strong>`)
-          .addTo(map);
+        e.originalEvent.stopPropagation();
+
+        const feature = e.features?.[0] as Feature | undefined;
+        if (!feature) return;
+
+        useMapStore.getState().setSelectedPoint({
+          id: feature.properties.id,
+        });
+
+        setActiveFeature(feature);
       });
 
-      map.on(
-        "mouseenter",
-        "clusters",
-        () => (map.getCanvas().style.cursor = "pointer"),
-      );
-      map.on(
-        "mouseleave",
-        "clusters",
-        () => (map.getCanvas().style.cursor = ""),
-      );
+    // cursor changes on marker hover
+      map.on("mouseenter", "clusters", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+
+      map.on("mouseleave", "clusters", () => {
+        map.getCanvas().style.cursor = "";
+      });
+
+      map.on("mouseenter", "unclustered-point", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+
+      map.on("mouseleave", "unclustered-point", () => {
+        map.getCanvas().style.cursor = "";
+      });
     }
   }, [points]);
 
+  // ----------------- RENDER -----------------
   return (
-    <>
+    <div className="relative w-full h-full">
+     
+      <MapSkeleton isMapLoaded={isMapLoaded} />
+
+    
       <div ref={mapContainer} className="w-full h-full" />
-      {mapRef.current && <LocateControl map={mapRef.current} />}
-    </>
+
+    
+      {/* {mapRef.current && <MapboxClickHandler map={mapRef.current} />} */}
+
+      {mapRef.current && (
+        <Popup map={mapRef.current} activeFeature={activeFeature} />
+      )}
+    </div>
   );
 }

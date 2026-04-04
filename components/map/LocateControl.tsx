@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapStore } from "@/stores/useMapStore";
 
+
 interface LocateControlProps {
   map: mapboxgl.Map | null;
 }
@@ -24,6 +25,7 @@ export default function LocateControl({ map }: LocateControlProps) {
       positionOptions: { enableHighAccuracy: true },
       trackUserLocation: true,
       showUserHeading: true,
+      
     });
 
     map.addControl(geolocate);
@@ -115,19 +117,11 @@ export default function LocateControl({ map }: LocateControlProps) {
   };
 
   return (
-    <button
-      onClick={handleLocate}
-      disabled={isLocating}
-      className={`fixed top-20 right-6 md:bottom-10 md:right-10 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition-all duration-300
-      ${isDragging ? "opacity-0" : "opacity-100"}
-      ${isLocating ? "animate-pulse" : ""}`}
-    >
-      📍
-    </button>
+   null
   );
 }
 
-// ----------------- HELPER -----------------
+// Helper to create a GeoJSON circle polygon around a point
 function createCircle(
   center: [number, number],
   radiusInKm: number,

@@ -4,17 +4,20 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 // ----------------- TYPES -----------------
-export type ToolPanel = "none" | "dashboard" | "excel" | "input" | "save";
+export type ToolPanel = "none" | "dashboard" | "excel" | "input" | "save"|"pointlist";
 
 export type Point = {
   id: string;
   lat: number;
   lng: number;
+  place?:string;
+  mag?:number;
+  time?:number;
   description?: string;
   name: string;
   category?: string;
   createdAt: number;
-   meta: Record<string, unknown>;
+  meta: Record<string, unknown>;
 };
 
 export type Dataset = {
@@ -40,9 +43,10 @@ interface MapState {
   // UI
   activePanel: ToolPanel;
 
-  // Routing
+  // Routing / Selection
   userLocation: { lng: number; lat: number } | null;
   selectedPointId: string | null;
+  selectedCoords: [number, number] | null;
 
   // Data
   datasets: Dataset[];
@@ -71,9 +75,14 @@ interface MapState {
 
   addActivity: (text: string) => void;
 
-  // ----------------- DERIVED HELPERS -----------------
-  setSelectedPoint: (id: string | null) => void;
+  // ----------------- SELECTION -----------------
+  setSelectedPoint: (
+    payload: { id?: string; coords?: [number, number] } | null
+  ) => void;
+
+  // ----------------- DERIVED -----------------
   getSelectedPoint: () => Point | null;
+  getSelectedCoords: () => [number, number] | null;
   getNearestPoint: () => Point | null;
 }
 
@@ -88,7 +97,9 @@ export const useMapStore = create<MapState>()(
       activePanel: "none",
 
       userLocation: null,
+
       selectedPointId: null,
+      selectedCoords: null,
 
       datasets: [],
       activeDatasetId: undefined,
@@ -120,7 +131,12 @@ export const useMapStore = create<MapState>()(
 
       replacePoints: (points) => set({ points }),
 
-      clearPoints: () => set({ points: [] }),
+      clearPoints: () =>
+        set({
+          points: [],
+          selectedPointId: null,
+          selectedCoords: null,
+        }),
 
       setMapView: (center, zoom) => set({ mapCenter: center, zoom }),
 
@@ -138,7 +154,7 @@ export const useMapStore = create<MapState>()(
       renameDataset: (id, name) =>
         set((state) => ({
           datasets: state.datasets.map((d) =>
-            d.id === id ? { ...d, name } : d,
+            d.id === id ? { ...d, name } : d
           ),
         })),
 
@@ -159,12 +175,40 @@ export const useMapStore = create<MapState>()(
           ],
         })),
 
-      // ----------------- ROUTING HELPERS -----------------
-      setSelectedPoint: (id) => set({ selectedPointId: id }),
+      // ----------------- SELECTION -----------------
+      setSelectedPoint: (payload) =>
+        set({
+          selectedPointId: payload?.id ?? null,
+          selectedCoords: payload?.coords ?? null,
+        }),
 
+      // ----------------- DERIVED -----------------
       getSelectedPoint: () => {
-        const { points, selectedPointId } = get();
+        const { points, selectedPointId, selectedCoords } = get();
+
+        // ✅ Custom click
+        if (selectedCoords) {
+          return {
+            id: "custom",
+            lat: selectedCoords[1],
+            lng: selectedCoords[0],
+            name: "Custom Location",
+            createdAt: 0, // stable
+            meta: {},
+          };
+        }
+
+        // ✅ Dataset point
         return points.find((p) => p.id === selectedPointId) || null;
+      },
+
+      getSelectedCoords: () => {
+        const { selectedCoords, selectedPointId, points } = get();
+
+        if (selectedCoords) return selectedCoords;
+
+        const found = points.find((p) => p.id === selectedPointId);
+        return found ? [found.lng, found.lat] : null;
       },
 
       getNearestPoint: () => {
@@ -176,7 +220,8 @@ export const useMapStore = create<MapState>()(
 
         for (const p of points) {
           const dist =
-            (p.lng - userLocation.lng) ** 2 + (p.lat - userLocation.lat) ** 2;
+            (p.lng - userLocation.lng) ** 2 +
+            (p.lat - userLocation.lat) ** 2;
 
           if (dist < minDist) {
             minDist = dist;
@@ -190,6 +235,6 @@ export const useMapStore = create<MapState>()(
     {
       name: "uzo-map-storage",
       storage: createJSONStorage(() => localStorage),
-    },
-  ),
+    }
+  )
 );

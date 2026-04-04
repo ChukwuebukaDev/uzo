@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { useMapStore, Point } from "@/stores/useMapStore";
-import PointConfirmDialog from "@/components/ui/PointConfirmDialog";
+import PointConfirmDialog from "@/components/points/PointConfirmDialog";
 
 export default function ExcelImporter() {
   const fileRef = useRef<HTMLInputElement>(null);

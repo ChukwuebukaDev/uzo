@@ -56,6 +56,14 @@ export default function Drawer() {
       ),
       action: () => openPanel("input"),
     },
+       {
+      id: "pointlist",
+      label: "Point List",
+      icon: (
+        <Image src="/images/point-list.png" width={34} height={25} alt="point list" />
+      ),
+      action: () => openPanel("pointlist"),
+    },
   ];
 
   return (

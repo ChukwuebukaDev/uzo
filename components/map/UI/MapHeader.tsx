@@ -28,7 +28,7 @@ export default function MapHeader() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-xl font-medium tracking-tight">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-tight">
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
 

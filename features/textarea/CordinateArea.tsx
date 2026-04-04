@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMapStore } from "@/stores/useMapStore";
 import { Button } from "@/components/ui/Button";
-import PointConfirmDialog from "@/components/ui/PointConfirmDialog";
+import PointConfirmDialog from "@/components/points/PointConfirmDialog";
 
 type Mode = "single" | "multiple";
 
