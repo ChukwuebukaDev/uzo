@@ -15,7 +15,7 @@ export default function PointList({ open, onClose }: Props) {
 
   const [search, setSearch] = useState("");
 
-  // ✅ Filter points
+
   const filteredPoints = useMemo(() => {
     if (!search) return points;
 
@@ -28,9 +28,11 @@ export default function PointList({ open, onClose }: Props) {
 
   return (
     <DialogOverlay open={open} onClose={onClose}>
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-5 flex flex-col max-h-[80vh]">
+    {points.length === 0 ? (
+      <div className="p-4 text-center text-white text-2xl animate-pulse">No points added yet.</div>
+    ) :   <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-5 flex flex-col max-h-[80vh]">
 
-        {/* ✅ Header */}
+      
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Your Points</h2>
           <span className="text-sm text-gray-500">
@@ -38,7 +40,7 @@ export default function PointList({ open, onClose }: Props) {
           </span>
         </div>
 
-        {/* ✅ Search */}
+   
         <div className="mb-4">
           <input
             type="text"
@@ -49,7 +51,7 @@ export default function PointList({ open, onClose }: Props) {
           />
         </div>
 
-        {/* ✅ Empty state */}
+      
         {filteredPoints.length === 0 && (
           <div className="flex flex-col items-center justify-center flex-1 text-gray-500 text-sm">
             <p>No points found</p>
@@ -95,7 +97,7 @@ export default function PointList({ open, onClose }: Props) {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
     </DialogOverlay>
   );
 }

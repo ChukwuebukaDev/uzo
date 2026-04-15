@@ -32,7 +32,7 @@ export default function Hero() {
 
         <div className="mt-10 flex justify-center">
           <Link
-            href="/map"
+            href="/home"
             className="px-6 py-3 sm:px-8 sm:py-4 flex justify-center items-center rounded-lg bg-yellow-400 text-black text-sm sm:text-base font-medium hover:bg-yellow-500 hover:shadow-lg transition duration-300"
           >
             <span>Open Map</span>

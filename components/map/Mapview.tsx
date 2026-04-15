@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
+import mapboxgl, { GeolocateControl } from "mapbox-gl";
+import SearchBox from "./search/SearchBox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapStore } from "@/stores/useMapStore";
 import Popup from "./popup/PopUp";
 import MapSkeleton from "./mapskeleton/MapSkeleton";
 import MapboxClickHandler from "./click/MapboxClickHandler";
-
+import LocateControl from "./LocateControl";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -28,6 +29,7 @@ export default function MapView() {
   const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const points = useMapStore((s) => s.points);
+  const clearPoints = useMapStore((s) => s.clearPoints);
   const userLocation = useMapStore((s) => s.userLocation);
 
  // initialize map
@@ -44,6 +46,8 @@ export default function MapView() {
 
     mapRef.current = map;
   
+    map.addControl(new GeolocateControl({ trackUserLocation: true, showAccuracyCircle: false }));
+
     map.on("load", () => {
       setIsMapLoaded(true);
     });
@@ -53,7 +57,6 @@ export default function MapView() {
       setActiveFeature(null);
     });
 
-  
     
 
     return () => {
@@ -218,7 +221,7 @@ export default function MapView() {
      
       <MapSkeleton isMapLoaded={isMapLoaded} />
 
-    
+    <SearchBox />
       <div ref={mapContainer} className="w-full h-full" />
 
     

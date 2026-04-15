@@ -1,9 +1,36 @@
 "use client";
+import { useMapStore } from "@/stores/useMapStore";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { MapPin, Route, ShieldCheck, Sparkles } from "lucide-react";
-
+const OpenWeatherMapKey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_KEY;
 export default function Home() {
+ const [weatherData, setWeatherData] = useState(null);
+
+  const userLocation = useMapStore((s) => s.userLocation);
+  const { lat, lng } = userLocation || { lat: 6.5244, lng: 3.3792 };
+
+
+    useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${OpenWeatherMapKey}`
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch weather");
+
+        const data = await res.json();
+        console.log("Current weather:", data);
+        setWeatherData(data);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
+    };
+
+    fetchWeather();
+  }, [lat, lng]);
   return (
     <main className="min-h-screen bg-linear-to-b ">
       <Features />
