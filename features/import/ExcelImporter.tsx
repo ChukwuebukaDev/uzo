@@ -17,21 +17,16 @@ export default function ExcelImporter() {
     fileRef.current?.click();
   }
 
-  function getValue(
-    row: Record<string, unknown>,
-    ...keys: string[]
-  ): string | undefined {
-    for (const k of keys) {
-      const v = row[k];
-      if (typeof v === "string" || typeof v === "number") {
-        return String(v);
-      }
+  function normalizeRow(row: Record<string, unknown>) {
+    const normalized: Record<string, unknown> = {};
+
+    for (const key in row) {
+      normalized[key.trim().toLowerCase()] = row[key];
     }
-    return undefined;
+
+    return normalized;
   }
-function isPoint(p: Point | null): p is Point {
-  return p !== null;
-}
+
   async function handleFile(file: File) {
     try {
       const data = await file.arrayBuffer();
@@ -46,8 +41,8 @@ function isPoint(p: Point | null): p is Point {
 
       const sheet = workbook.Sheets[sheetName];
 
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
-
+      const rows =
+        XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
 
 const parsed = rows
   .map((rawRow) => {
@@ -68,7 +63,17 @@ const parsed = rows
     const meta: Record<string, unknown> = {};
 
     for (const key in row) {
-      if (!["lat", "latitude", "lng", "longitude", "ihs site id", "site id", "name"].includes(key)) {
+      if (
+        ![
+          "lat",
+          "latitude",
+          "lng",
+          "longitude",
+          "ihs site id",
+          "site id",
+          "name",
+        ].includes(key)
+      ) {
         meta[key] = row[key];
       }
     }
@@ -78,11 +83,11 @@ const parsed = rows
       lat,
       lng,
       name: name ? String(name) : undefined,
-      createdAt: Date.now(),
+      createdAt: +new Date(),
       meta,
     };
   })
-  .filter((p): p is Point => p !== null); // 👈 narrowing happens here
+  .filter((p): p is Point => p !== null);  
 
       if (parsed.length === 0) {
         alert("No valid coordinates found.");
@@ -122,7 +127,7 @@ const parsed = rows
 
       {/* Confirmation dialog */}
       <PointConfirmDialog
-      key={dialogOpen ? "open" : "closed"}
+        key={dialogOpen ? "open" : "closed"}
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         points={uploadedPoints}
@@ -131,13 +136,4 @@ const parsed = rows
       />
     </>
   );
-}
-function normalizeRow(row: Record<string, unknown>) {
-  const normalized: Record<string, unknown> = {};
-
-  for (const key in row) {
-    normalized[key.trim().toLowerCase()] = row[key];
-  }
-
-  return normalized;
 }

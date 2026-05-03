@@ -5,6 +5,11 @@ import { useMemo, useState, useEffect } from "react";
 import { Point } from "@/stores/useMapStore";
 
 interface PointFilterProps {
+    columns: {
+    key: string;
+    label: string;
+    options: string[];
+  }[];
   filterOpen: boolean;
   points: Point[] | null;
   onClose: () => void;

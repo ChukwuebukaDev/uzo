@@ -12,7 +12,7 @@ import PointFilter from "./PointFilter";
 interface Props {
   open: boolean;
   onClose: () => void;
-  points: { lat: number; lng: number; name?: string; meta?: Record<string, unknown> }[];
+  points: Point[];
   onAdd: (points: Point[]) => void;
   onReplace: (points: Point[]) => void;
   title?: string;

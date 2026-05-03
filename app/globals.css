@@ -20,6 +20,7 @@ body {
 button {
   cursor: pointer;
 }
+
 .uzo-pulsing-marker span {
   display: block;
   width: 1.25rem;

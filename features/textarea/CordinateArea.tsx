@@ -1,34 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { useMapStore } from "@/stores/useMapStore";
+import { useMapStore, Point } from "@/stores/useMapStore";
 import { Button } from "@/components/ui/Button";
 import PointConfirmDialog from "@/components/points/PointConfirmDialog";
 
 type Mode = "single" | "multiple";
+
+function createPoint(lat: number, lng: number): Point {
+  return {
+    name:'',
+    id: crypto.randomUUID(),
+    lat,
+    lng,
+    createdAt: Date.now(),
+    meta: {},
+  };
+}
 
 export default function CoordinateInput() {
   const [mode, setMode] = useState<Mode>("multiple");
   const [text, setText] = useState("");
   const [single, setSingle] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [uploadedPoints, setUploadedPoints] = useState<{ lat: number; lng: number }[]>([]);
-  const [warning, setWarning] = useState(""); 
+
+  const [uploadedPoints, setUploadedPoints] = useState<Point[]>([]);
+  const [warning, setWarning] = useState("");
 
   const { addPoints, setPoints, clearPoints } = useMapStore();
 
-  
   function parseMultiple() {
     const lines = text.split("\n");
-    const parsed = lines
-      .map((line) => {
-        const [lat, lng] = line.split(",").map(Number);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
-        return null;
-      })
-      .filter(Boolean) as { lat: number; lng: number }[];
 
-    if (parsed.length) {
+    const parsed: Point[] = [];
+
+    for (const line of lines) {
+      const [latStr, lngStr] = line.split(",").map(s => s.trim());
+
+      const lat = Number(latStr);
+      const lng = Number(lngStr);
+
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        parsed.push(createPoint(lat, lng));
+      }
+    }
+
+    if (parsed.length > 0) {
       setUploadedPoints(parsed);
       setDialogOpen(true);
       setWarning("");
@@ -38,9 +55,13 @@ export default function CoordinateInput() {
   }
 
   function parseSingle() {
-    const [lat, lng] = single.split(",").map(Number);
+    const [latStr, lngStr] = single.split(",").map(s => s.trim());
+
+    const lat = Number(latStr);
+    const lng = Number(lngStr);
+
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      setUploadedPoints([{ lat, lng }]);
+      setUploadedPoints([createPoint(lat, lng)]);
       setDialogOpen(true);
       setSingle("");
       setWarning("");
@@ -52,21 +73,19 @@ export default function CoordinateInput() {
   return (
     <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-50 w-[92vw] max-w-md">
 
-    
       <div className="bg-white/80 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/40 p-4">
 
-       
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">Add Coordinates</h3>
+
           <button
-            onClick={() => setMode((m) => (m === "single" ? "multiple" : "single"))}
+            onClick={() => setMode(m => (m === "single" ? "multiple" : "single"))}
             className="text-xs px-3 py-1 rounded-full bg-gray-900 text-white hover:bg-gray-700 transition"
           >
             {mode === "single" ? "Multi" : "Single"}
           </button>
         </div>
 
-        
         {mode === "multiple" ? (
           <textarea
             value={text}
@@ -86,25 +105,23 @@ export default function CoordinateInput() {
           />
         )}
 
-       
         {warning && (
           <p className="text-red-600 text-xs mt-1 animate-pulse">
             {warning}
           </p>
         )}
 
-      
         <div className="flex gap-2 mt-4">
           <Button onClick={mode === "multiple" ? parseMultiple : parseSingle}>
             Add
           </Button>
+
           <Button variant="danger" onClick={clearPoints}>
             Clear
           </Button>
         </div>
       </div>
 
-      
       <PointConfirmDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}

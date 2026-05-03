@@ -16,8 +16,8 @@ export default function MapSearch() {
           if (!feature) return;
 
           
-          const [lng, lat] = feature.geometry.coordinates;
-            addPoints([{ id: crypto.randomUUID(), lat, lng,name: feature.properties?.name, createdAt: Date.now(), meta: feature.properties }]);
+          // const [lng, lat] = feature.geometry.coordinates;
+          //   addPoints([{ id: crypto.randomUUID(), lat, lng,name: feature.properties?.name, createdAt: Date.now(), meta: feature.properties }]);
          
         }}
       />
