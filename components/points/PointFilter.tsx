@@ -3,9 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo, useState, useEffect } from "react";
 import { Point } from "@/stores/useMapStore";
+import { X, Filter, RotateCcw, Check } from "lucide-react";
+import { HiOutlineChevronDown } from "react-icons/hi2";
 
 interface PointFilterProps {
-    columns: {
+  columns: {
     key: string;
     label: string;
     options: string[];
@@ -29,12 +31,12 @@ export default function PointFilter({
     let result: Record<string, any> = {};
 
     for (const key in obj) {
-      const newKey = parentKey ? `${parentKey}.${key}` : key;
+      const newKey = parentKey? `${parentKey}.${key}` : key;
 
       if (
         typeof obj[key] === "object" &&
-        obj[key] !== null &&
-        !Array.isArray(obj[key])
+        obj[key]!== null &&
+      !Array.isArray(obj[key])
       ) {
         Object.assign(result, flattenObject(obj[key], newKey));
       } else {
@@ -60,14 +62,14 @@ export default function PointFilter({
     return keys.map((key) => {
       const values = Array.from(
         new Set(flatPoints.map((p) => String(p[key])))
-      ).filter(Boolean);
+      ).filter(Boolean).sort();
 
       return {
         key,
         label: key
-          .split(".")
-          .map((k) => k.charAt(0).toUpperCase() + k.slice(1))
-          .join(" → "),
+         .split(".")
+         .map((k) => k.charAt(0).toUpperCase() + k.slice(1))
+         .join(" → "),
         options: values,
       };
     });
@@ -81,7 +83,7 @@ export default function PointFilter({
   /* ------------------ HANDLERS ------------------ */
   const handleChange = (key: string, value: string) => {
     setFilters((prev) => ({
-      ...prev,
+     ...prev,
       [key]: value,
     }));
   };
@@ -89,15 +91,18 @@ export default function PointFilter({
   const handleApply = () => {
     if (!points) return;
 
-    const filtered = flatPoints.filter((point, index) => {
+    const filtered = flatPoints.filter((point) => {
       return Object.entries(filters).every(([key, value]) => {
         if (!value) return true;
         return String(point[key]) === value;
       });
     });
 
-    // Map back to original points
-    const result = filtered.map((_, i) => points[i]);
+    // Map back to original points using index
+    const result = points.filter((_, idx) => {
+      const flatPoint = flatPoints[idx];
+      return filtered.includes(flatPoint);
+    });
 
     onApply?.(result);
     onClose();
@@ -112,89 +117,199 @@ export default function PointFilter({
   return (
     <AnimatePresence>
       {filterOpen && (
-        <motion.div
-          className="fixed inset-0 z-999 bg-black/50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
+        <>
+          {/* Backdrop */}
           <motion.div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-          >
-            {/* HEADER */}
-            <div className="p-4 border-b flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold">Filter Points</h2>
-                <p className="text-sm text-gray-500">
-                  Auto-generated from your dataset
-                </p>
-              </div>
+            className="fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
 
-              {activeCount > 0 && (
-                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                  {activeCount} active
-                </span>
-              )}
-            </div>
-
-            {/* BODY */}
-            <div className="p-4 space-y-4 overflow-y-auto flex-1">
-              {columns.map((col) => (
-                <div key={col.key} className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    {col.label}
-                  </label>
-
-                  <select
-                    value={filters[col.key] || ""}
-                    onChange={(e) =>
-                      handleChange(col.key, e.target.value)
-                    }
-                    className="w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">All</option>
-
-                    {col.options.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </div>
-
-            {/* FOOTER */}
-            <div className="p-4 border-t flex justify-between">
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+          {/* Modal Container */}
+          <div className="fixed inset-0 z-[70] overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-2xl my-8
+                          flex flex-col
+                          rounded-2xl sm:rounded-
+                          bg-gradient-to-br from-white/70 via-white/60 to-white/40
+                          backdrop-blur-2xl backdrop-saturate-150
+                          shadow-[0_8px_32px_rgba(31,38,135,0.15)]
+                          ring-1 ring-white/30
+                          overflow-hidden"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
-                Clear
-              </button>
+                {/* HEADER */}
+                <div className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4
+                               border-b border-white/20
+                               bg-white/40 backdrop-blur-xl">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="p-2.5 bg-gradient-to-br from-violet-400/20 to-violet-600/20
+                                     rounded-xl backdrop-blur-sm
+                                     ring-1 ring-violet-500/20 shrink-0">
+                        <Filter size={18} className="text-violet-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                          Filter Points
+                        </h2>
+                        <p className="text-xs sm:text-sm text-gray-600/80 mt-0.5">
+                          Auto-generated from your dataset
+                        </p>
+                      </div>
+                    </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {activeCount > 0 && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="text-xs font-semibold
+                                    bg-violet-500/20 text-violet-700
+                                    px-2.5 py-1 rounded-full
+                                    ring-1 ring-violet-400/30 backdrop-blur-sm"
+                        >
+                          {activeCount} active
+                        </motion.div>
+                      )}
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={onClose}
+                        aria-label="Close dialog"
+                        className="p-2 rounded-xl bg-white/50 hover:bg-white/70
+                                  backdrop-blur-sm ring-1 ring-white/40
+                                  transition-all"
+                      >
+                        <X size={18} className="text-gray-700" />
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
 
-                <button
-                  onClick={handleApply}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                >
-                  Apply Filters
-                </button>
-              </div>
+                {/* BODY */}
+                <div className="px-5 sm:px-7 py-5 sm:py-6 max-h- overflow-y-auto">
+                  {columns.length === 0? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="p-4 bg-white/50 rounded-2xl backdrop-blur-sm
+                                     ring-1 ring-white/50 mb-3">
+                        <Filter size={32} className="text-gray-400/60" />
+                      </div>
+                      <p className="text-sm font-medium text-gray-700">
+                        No filterable fields
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {columns.map((col, idx) => (
+                        <motion.div
+                          key={col.key}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.03 }}
+                          className="space-y-2"
+                        >
+                          <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
+                            {col.label}
+                          </label>
+
+                          <div className="relative">
+                            <select
+                              value={filters[col.key] || ""}
+                              onChange={(e) =>
+                                handleChange(col.key, e.target.value)
+                              }
+                              className="w-full appearance-none pl-4 pr-10 py-2.5
+                                        bg-white/60 backdrop-blur-md
+                                        ring-1 ring-white/50 hover:ring-white/70
+                                        focus:ring-2 focus:ring-violet-400/40
+                                        rounded-xl text-sm text-gray-900
+                                        outline-none transition-all duration-200 cursor-pointer
+                                        shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                            >
+                              <option value="" className="bg-white">All</option>
+                              {col.options.map((opt) => (
+                                <option key={opt} value={opt} className="bg-white">
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                            <HiOutlineChevronDown
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2
+                                        text-gray-500/70 pointer-events-none"
+                              size={16}
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* FOOTER */}
+                <div className="px-5 sm:px-7 py-4 sm:py-5
+                               border-t border-white/20
+                               bg-white/40 backdrop-blur-xl
+                               pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={clearFilters}
+                      disabled={activeCount === 0}
+                      className="px-4 py-2.5 rounded-xl
+                                bg-white/60 hover:bg-white/80
+                                backdrop-blur-sm ring-1 ring-white/50
+                                text-gray-700 text-sm font-medium
+                                disabled:opacity-40 disabled:cursor-not-allowed
+                                flex items-center justify-center gap-2
+                                transition-all"
+                    >
+                      <RotateCcw size={16} />
+                      Clear
+                    </motion.button>
+
+                    <div className="flex gap-2 sm:gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={onClose}
+                        className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl
+                                  bg-white/60 hover:bg-white/80
+                                  backdrop-blur-sm ring-1 ring-white/50
+                                  text-gray-700 text-sm font-medium
+                                  transition-all"
+                      >
+                        Cancel
+                      </motion.button>
+
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ boxShadow: "0 8px 24px rgba(139,92,246,0.25)" }}
+                        onClick={handleApply}
+                        className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl
+                                  bg-gradient-to-br from-violet-500 to-violet-600
+                                  hover:from-violet-600 hover:to-violet-700
+                                  text-white text-sm font-medium
+                                  shadow-[0_4px_16px_rgba(139,92,246,0.3)]
+                                  ring-1 ring-violet-400/50
+                                  flex items-center justify-center gap-2
+                                  transition-all"
+                      >
+                        <Check size={16} />
+                        Apply Filters
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </>
       )}
     </AnimatePresence>
   );

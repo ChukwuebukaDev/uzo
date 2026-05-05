@@ -3,16 +3,24 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import DialogOverlay from "../ui/DialogOverlay";
 import { HiOutlinePlus, HiOutlineFire } from "react-icons/hi2";
-import { Trash, Pen, Eye } from "lucide-react";
+import { MapPin, X, Layers } from "lucide-react";
 import { Point, useMapStore } from "@/stores/useMapStore";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+
 import MetaViewer from "./MetaViewer";
 import PointFilter from "./PointFilter";
+import PointCard from "./PointCard";
+import ToolBar from "./ToolBar";
+import Alerts from "./Alerts";
+
 interface Props {
   open: boolean;
   onClose: () => void;
   points: Point[];
+  headers: string[];
+  errors: string[];
+  suggestedNameKey?: string;
   onAdd: (points: Point[]) => void;
   onReplace: (points: Point[]) => void;
   title?: string;
@@ -23,6 +31,9 @@ export default function PointConfirmDialog({
   open,
   onClose,
   points,
+  headers = [],
+  errors,
+  suggestedNameKey,
   onAdd,
   onReplace,
   title = "Import Points",
@@ -30,65 +41,63 @@ export default function PointConfirmDialog({
 }: Props) {
   const { closePanel } = useMapStore();
 
-
-  const normalize = (pts: Props["points"]): Point[] =>
-    pts.map((p) => ({
-      id: crypto.randomUUID(),
-      lat: p.lat,
-      lng: p.lng,
-      name: p.name ?? "Unnamed",
-      createdAt: Date.now(),
-      meta: p.meta ?? {},
-    }));
+  const [nameKey, setNameKey] = useState(
+    suggestedNameKey ?? headers?.[0] ?? ""
+  );
 
   const [list, setList] = useState<Point[]>([]);
   const [search, setSearch] = useState("");
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [viewPoint, setViewPoint] = useState<Point | null>(null);
-  const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  // ✅ SINGLE SOURCE OF TRUTH FOR EYE STATE
+  const [activeEyeId, setActiveEyeId] = useState<string | null>(null);
+
+  const applyNameKey = (pts: Point[], key: string): Point[] =>
+    pts.map((p) => ({
+      ...p,
+      name: String(p.meta?.[key] ?? p.name ?? "Unnamed"),
+    }));
+
   useEffect(() => {
     if (open) {
-      setList(normalize(points));
-      setSearch("");
-      setEditingIndex(null);
+      setList(applyNameKey(points, nameKey));
     }
-  }, [open, points]);
+  }, [open, points, nameKey]);
 
-  
+  useEffect(() => {
+    if (!suggestedNameKey && headers?.length) {
+      setNameKey(headers[0]);
+    }
+  }, [headers, suggestedNameKey]);
+
   const filtered = useMemo(() => {
     if (!search.trim()) return list;
-
     const q = search.toLowerCase();
 
     return list.filter((p) => {
       if (p.name?.toLowerCase().includes(q)) return true;
-
       return Object.values(p.meta ?? {}).some((v) =>
         String(v).toLowerCase().includes(q)
       );
     });
   }, [list, search]);
 
-  /**
-   * Detect duplicates
-   */
-  const duplicateIndexes = useMemo(() => {
-    const map = new Map<string, number[]>();
+  const duplicateIds = useMemo(() => {
+    const map = new Map<string, string[]>();
 
-    list.forEach((p, i) => {
-      const key = `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
-      const arr = map.get(key) ?? [];
-      arr.push(i);
-      map.set(key, arr);
+    list.forEach((p) => {
+      const key = `${Math.round(p.lat * 1e5)},${Math.round(p.lng * 1e5)}`;
+      map.set(key, [...(map.get(key) ?? []), p.id]);
     });
 
-    const dup = new Set<number>();
+    const dups = new Set<string>();
+    map.forEach((ids) => {
+      if (ids.length > 1) ids.forEach((id) => dups.add(id));
+    });
 
-    for (const indexes of map.values()) {
-      if (indexes.length > 1) indexes.forEach((i) => dup.add(i));
-    }
-
-    return dup;
+    return dups;
   }, [list]);
 
   const removeDuplicates = () => {
@@ -96,218 +105,166 @@ export default function PointConfirmDialog({
 
     setList((prev) =>
       prev.filter((p) => {
-        const key = `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
+        const key = `${Math.round(p.lat * 1e5)},${Math.round(p.lng * 1e5)}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       })
     );
+
+    toast.success("Duplicates removed");
   };
 
-  const deletePoint = (i: number) =>
-    setList((prev) => prev.filter((_, idx) => idx !== i));
+  const deletePoint = (id: string) => {
+    if (!confirm("Delete this point?")) return;
+    setList((prev) => prev.filter((p) => p.id !== id));
+  };
 
-  const updateName = (i: number, name: string) =>
+  const updateName = (id: string, name: string) => {
     setList((prev) =>
-      prev.map((p, idx) => (idx === i ? { ...p, name } : p))
+      prev.map((p) => (p.id === id ? { ...p, name } : p))
     );
+  };
 
   return (
     <>
       <DialogOverlay open={open} onClose={onClose}>
         <AnimatePresence>
           {open && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.2 }}
-              className="
-                w-[95vw] max-w-2xl 
-                bg-white 
-                rounded-2xl 
-                p-4 sm:p-6 
-                flex flex-col gap-4 
-                max-h-[90vh] 
-                overflow-hidden
-                shadow-2xl
-              "
-            >
-              {/* HEADER */}
-              
-              <div className="flex justify-between items-center">
-               <div>
-                 <h3 className="text-lg sm:text-xl font-semibold">
-                  {title}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {description ?? `${list.length} points ready for import`}
-                </p>
-
-               </div>
-                <button onClick={()=>setFilterOpen(p => !p)} className="dark:bg-white/75  bg-black/35 px-3 py-1 text-gray-200  hover:bg-black/55 transition-all duration-500 rounded-3xl">Filter Points</button>
-              </div>
-
-              {/* SEARCH */}
-              <input
-                placeholder="Search by name or metadata..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+            <div className="fixed inset-0 z-50">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-black/30 backdrop-blur-sm"
               />
 
-              {/* DUPLICATES */}
-              {duplicateIndexes.size > 0 && (
-                <div className="text-red-600 text-sm bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
-                  ⚠️ {duplicateIndexes.size} duplicate point
-                  {duplicateIndexes.size > 1 ? "s" : ""} detected
-                </div>
-              )}
-
-              {/* LIST */}
-              <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                {filtered.map((p, i) => (
+              <div className="absolute inset-0 overflow-y-auto">
+                <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
                   <motion.div
-                    key={p.id}
-                    layoutId={p.id} // 🔥 row → modal animation
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`
-                      p-3 rounded-xl border flex flex-col gap-2 
-                      cursor-pointer transition
-                      ${
-                        duplicateIndexes.has(i)
-                          ? "bg-red-50 border-red-300"
-                          : "bg-gray-100 hover:bg-gray-200"
-                      }
-                    `}
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="relative w-full max-w-5xl my-8 flex flex-col rounded-2xl bg-white/60 backdrop-blur-xl"
                   >
-                    {/* TOP ROW */}
-                    <div className="flex justify-between items-center gap-2">
-                      
-                      {/* NAME */}
-                      {editingIndex === i ? (
-                        <input
-                          autoFocus
-                          value={p.name ?? ""}
-                          onChange={(e) => updateName(i, e.target.value)}
-                          onBlur={() => setEditingIndex(null)}
-                          className="border px-2 py-1 text-sm rounded w-full"
+                    {/* HEADER */}
+                    <div className="sticky top-0 px-6 py-5 border-b bg-white/40">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <MapPin size={18} className="text-emerald-600" />
+                          <div>
+                            <h3 className="text-lg font-semibold">{title}</h3>
+                            <p className="text-sm text-gray-600">
+                              {description ??
+                                `${list.length} points • ${duplicateIds.size} duplicates`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button onClick={onClose}>
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      <div className="mt-4">
+                        <ToolBar
+                          search={search}
+                          setSearch={setSearch}
+                          headers={headers}
+                          nameKey={nameKey}
+                          setNameKey={setNameKey}
+                          onOpenFilter={() => setFilterOpen(true)}
                         />
-                      ) : (
-                        <span className="font-medium text-sm truncate">
-                          {p.name}
-                        </span>
-                      )}
-
-                      {/* ACTIONS */}
-                      <div className="flex gap-2 shrink-0">
-                        <button onClick={() => setEditingIndex(i)}>
-                          <Pen size={16} />
-                        </button>
-
-                        <button onClick={() => setViewPoint(p)}>
-                          <Eye size={16} />
-                        </button>
-
-                        <button onClick={() => deletePoint(i)}>
-                          <Trash size={16} color="red" />
-                        </button>
                       </div>
                     </div>
 
-                    {/* COORDINATES */}
-                    <span className="text-xs text-gray-600">
-                      {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
-                    </span>
+                    {/* LIST */}
+                    <div className="p-6">
+                      {filtered.length === 0 ? (
+                        <div className="text-center py-10">
+                          <Layers className="mx-auto text-gray-400" />
+                          <p>No points found</p>
+                        </div>
+                      ) : (
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {filtered.map((p) => (
+                            <PointCard
+                              key={p.id}
+                              point={p}
+                              isDuplicate={duplicateIds.has(p.id)}
+                              nameKey={nameKey}
+                              editingId={editingId}
+                              setEditingId={setEditingId}
+                              updateName={updateName}
+                              deletePoint={deletePoint}
+                              onView={setViewPoint}
+                              eye={{
+                                activeId: activeEyeId,
+                                setActiveId: setActiveEyeId,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                    {/* META PREVIEW */}
-                    {Object.keys(p.meta ?? {}).length > 0 && (
-                      <span className="text-xs text-gray-500 line-clamp-1">
-                        {Object.entries(p.meta)
-                          .slice(0, 2)
-                          .map(([k, v]) => `${k}: ${v}`)
-                          .join(" • ")}
+                    {/* FOOTER */}
+                    <div className="sticky bottom-0 p-5 border-t bg-white/50 flex justify-between">
+                      <span className="text-sm">
+                        {filtered.length} / {list.length}
                       </span>
-                    )}
+
+                      <div className="flex gap-3">
+                        <button onClick={onClose}>Cancel</button>
+
+                        <button
+                          onClick={() => {
+                            onReplace(list);
+                            setActiveEyeId(null);
+                            closePanel();
+                            onClose();
+                          }}
+                        >
+                          Replace
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            onAdd(list);
+                            setActiveEyeId(null);
+                            closePanel();
+                            onClose();
+                          }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
                   </motion.div>
-                ))}
+                </div>
               </div>
-
-              {/* FOOTER */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-
-                {duplicateIndexes.size > 0 && (
-                  <button
-                    onClick={removeDuplicates}
-                    className="bg-blue-500 text-white py-2 px-4 rounded-lg"
-                  >
-                    Remove Duplicates
-                  </button>
-                )}
-
-                <button
-                  onClick={onClose}
-                  className="bg-gray-200 py-2 px-4 rounded-lg"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => {
-                    onAdd(list);
-                    toast.success("Points added successfully");
-                    closePanel();
-                    onClose();
-                  }}
-                  className="bg-amber-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-1"
-                >
-                  <HiOutlinePlus />
-                  Add
-                </button>
-
-                <button
-                  onClick={() => {
-                    onReplace(list);
-                    toast.success("Points replaced successfully");
-                    closePanel();
-                    onClose();
-                  }}
-                  className="bg-red-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-1"
-                >
-                  <HiOutlineFire />
-                  Replace
-                </button>
-              </div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </DialogOverlay>
 
-      {/* META VIEWER MODAL */}
+      {/* MODALS */}
       <MetaViewer
         open={!!viewPoint}
         point={viewPoint}
-        onClose={() => setViewPoint(null)}
+        onClose={() => {
+          setViewPoint(null);
+          setActiveEyeId(null);
+        }}
       />
-      {/* FILTER */}
-      <PointFilter columns={[
-    {
-      key: "status",
-      label: "Status",
-      options: ["Active", "Inactive", "Pending"],
-    },
-    {
-      key: "category",
-      label: "Category",
-      options: ["A", "B", "C"],
-    },
-    {
-      key: "type",
-      label: "Type",
-      options: ["Road", "Water", "Land"],
-    },
-  ]} filterOpen={filterOpen} points={points} onClose={()=>setFilterOpen(false)}/>
+
+      <PointFilter
+        columns={headers.map((h) => ({ key: h, label: h, options: [] }))}
+        filterOpen={filterOpen}
+        points={list}
+        onClose={() => setFilterOpen(false)}
+      />
     </>
   );
 }
