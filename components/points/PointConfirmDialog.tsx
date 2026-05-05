@@ -2,7 +2,6 @@
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import DialogOverlay from "../ui/DialogOverlay";
-import { HiOutlinePlus, HiOutlineFire } from "react-icons/hi2";
 import { MapPin, X, Layers } from "lucide-react";
 import { Point, useMapStore } from "@/stores/useMapStore";
 import { toast } from "sonner";
@@ -12,8 +11,6 @@ import MetaViewer from "./MetaViewer";
 import PointFilter from "./PointFilter";
 import PointCard from "./PointCard";
 import ToolBar from "./ToolBar";
-import Alerts from "./Alerts";
-
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -51,7 +48,7 @@ export default function PointConfirmDialog({
   const [viewPoint, setViewPoint] = useState<Point | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // ✅ SINGLE SOURCE OF TRUTH FOR EYE STATE
+  // eye state here for changing text
   const [activeEyeId, setActiveEyeId] = useState<string | null>(null);
 
   const applyNameKey = (pts: Point[], key: string): Point[] =>
