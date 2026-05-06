@@ -46,14 +46,14 @@ export default function MapHeader() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-100 transition-all duration-500 ${
           scrolled
             ? "bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
             : "bg-white/50 dark:bg-neutral-900/50 backdrop-blur-md"
         }`}
       >
         {/* Top border glow */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/50 to-transparent" />
 
         <div className="max-w-6xl mx-auto flex items-center justify-between p-4 px-6">
           {/* Logo */}
@@ -66,13 +66,13 @@ export default function MapHeader() {
               href="/"
               className="relative group flex items-center gap-2 text-2xl font-bold tracking-tight hover:opacity-80 transition-all duration-300"
             >
-              <span className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                 Uzo
               </span>
               <span className="text-2xl">🌍</span>
               
               {/* Logo underline on hover */}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full" />
             </Link>
           </motion.div>
 
@@ -106,17 +106,17 @@ export default function MapHeader() {
                     {isActive && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl"
+                        className="absolute inset-0 bg-linear-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl"
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
                     )}
 
                     {/* Hover background */}
-                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-gray-100/50 to-gray-50/50 dark:from-gray-800/30 dark:to-gray-700/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="absolute inset-0 rounded-xl bg-linear-to-r from-gray-100/50 to-gray-50/50 dark:from-gray-800/30 dark:to-gray-700/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     {/* Bottom underline indicator */}
                     <span
-                      className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ${
+                      className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-linear-to-r from-blue-500 to-purple-500 transition-all duration-300 ${
                         isActive ? "w-6" : "w-0 group-hover:w-4"
                       }`}
                     />
@@ -159,7 +159,7 @@ export default function MapHeader() {
 
         {/* Bottom border glow on scroll */}
         {scrolled && (
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
         )}
       </header>
 
@@ -183,12 +183,12 @@ export default function MapHeader() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed right-0 top-0 bottom-0 w-80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl shadow-2xl z-50 md:hidden"
+              className="fixed right-0 top-0 bottom-0  w-80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl shadow-2xl z-500 md:hidden"
             >
               {/* Menu Header */}
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                  <span className="text-xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                     Menu
                   </span>
                   <button
@@ -219,7 +219,7 @@ export default function MapHeader() {
                         onClick={handleLinkClick}
                         className={`relative block px-4 py-3 rounded-xl transition-all duration-300 group ${
                           isActive
-                            ? "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 text-gray-900 dark:text-white font-semibold"
+                            ? "bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 text-gray-900 dark:text-white font-semibold"
                             : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                         }`}
                       >
@@ -228,14 +228,14 @@ export default function MapHeader() {
                           {isActive && (
                             <motion.div
                               layoutId="activeMobileIndicator"
-                              className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                              className="w-1.5 h-1.5 rounded-full bg-linear-to-r from-blue-500 to-purple-500"
                             />
                           )}
                         </span>
                         
                         {/* Hover effect */}
                         {!isActive && (
-                          <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-0.5 h-0 bg-gradient-to-b from-blue-500 to-purple-500 transition-all duration-300 group-hover:h-6" />
+                          <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-0.5 h-0 bg-linear-to-b from-blue-500 to-purple-500 transition-all duration-300 group-hover:h-6" />
                         )}
                       </Link>
                     </motion.div>

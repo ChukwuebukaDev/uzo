@@ -9,7 +9,7 @@ export default function MapLayout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen overflow-auto">
       <Toaster richColors position="top-center" />
       <MapHeader />
-      <main className={`flex-1 relative ${inter.className}`}>{children}</main>
+      <main className={`flex-1 ${inter.className}`}>{children}</main>
       <MapFooter />
     </div>
   );
